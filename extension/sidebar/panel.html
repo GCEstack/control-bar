@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>GCE Don Control Bar</title>
+  <link rel="stylesheet" href="panel.css" />
+</head>
+<body>
+  <header id="hdr">
+    <span id="hdr-seat">CODA</span>
+    <span id="hdr-state">IDLE</span>
+  </header>
+
+  <section id="status" aria-live="polite">
+    <div id="status-line" class="muted">NO STATE RECEIVED</div>
+    <div id="stale" class="muted"></div>
+  </section>
+
+  <nav id="controls" aria-label="GCE controls"></nav>
+
+  <section id="lastcmd" class="muted"></section>
+
+  <footer id="ftr">
+    <button id="btn-log" type="button" class="mini" title="Append-only logs">LOG</button>
+    <button id="btn-resume" type="button" class="mini" title="Re-open session for new commands">NEW SESSION</button>
+  </footer>
+
+  <dialog id="logdlg">
+    <div class="dlg-hd">APPEND-ONLY LOG <button id="btn-log-close" class="mini">CLOSE</button></div>
+    <pre id="logbody"></pre>
+  </dialog>
+
+  <script src="panel.js"></script>
+</body>
+</html>

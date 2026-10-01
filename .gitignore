@@ -1,0 +1,8 @@
+node_modules/
+.git/
+*.log
+.DS_Store
+Thumbs.db
+evidence/*.json
+!evidence/.gitkeep
+test/node_modules/

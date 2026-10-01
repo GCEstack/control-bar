@@ -1,0 +1,162 @@
+:root {
+  --bg: #101216;
+  --fg: #d6dae0;
+  --muted: #6f7780;
+  --line: #22262d;
+  --accent: #4a9eff;
+  --ok: #3fb950;
+  --warn: #d29922;
+  --bad: #f85149;
+  --amb: #a371f7;
+}
+
+* { box-sizing: border-box; }
+
+html, body {
+  margin: 0;
+  padding: 0;
+  background: var(--bg);
+  color: var(--fg);
+  font: 12px/1.35 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+}
+
+#hdr {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 5px 8px;
+  border-bottom: 1px solid var(--line);
+  font-weight: 700;
+  letter-spacing: .06em;
+}
+
+#hdr-seat { color: var(--accent); }
+#hdr-state { font-size: 11px; }
+
+#hdr-state[data-s="PENDING"]           { color: var(--warn); }
+#hdr-state[data-s="ACCEPTED"]          { color: var(--ok); }
+#hdr-state[data-s="PARTIAL"]           { color: var(--warn); }
+#hdr-state[data-s="REJECTED"]          { color: var(--bad); }
+#hdr-state[data-s="AMBIGUOUS_STATE"]   { color: var(--amb); }
+#hdr-state[data-s="FAILED_NOT_SENT"]   { color: var(--bad); }
+#hdr-state[data-s="FAILED_SENT_UNCONFIRMED"] { color: var(--bad); }
+#hdr-state[data-s="NO_ACTIVE_SEAT"]    { color: var(--bad); }
+#hdr-state[data-s="IDLE"]              { color: var(--muted); }
+
+#status {
+  padding: 6px 8px;
+  border-bottom: 1px solid var(--line);
+}
+
+#status-line { white-space: pre-wrap; word-break: break-word; }
+#stale { margin-top: 3px; font-size: 11px; }
+.muted { color: var(--muted); }
+
+#controls {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 4px;
+  padding: 8px;
+}
+
+#controls button {
+  appearance: none;
+  border: 1px solid var(--line);
+  background: #181c22;
+  color: var(--fg);
+  font: inherit;
+  font-weight: 600;
+  letter-spacing: .04em;
+  padding: 9px 4px;
+  cursor: pointer;
+  border-radius: 3px;
+  text-align: center;
+}
+
+#controls button:hover:not(:disabled) { border-color: var(--accent); color: #fff; }
+#controls button:active:not(:disabled) { background: #222831; }
+#controls button:disabled { opacity: .38; cursor: not-allowed; }
+
+#controls button[data-cmd="END_SESSION"] { grid-column: 1 / -1; border-color: #4a2626; }
+#controls button[data-cmd="END_SESSION"]:hover:not(:disabled) { border-color: var(--bad); color: #ffb4b4; }
+
+#controls button .rs {
+  display: block;
+  font-size: 9px;
+  color: var(--muted);
+  font-weight: 400;
+  letter-spacing: 0;
+  margin-top: 2px;
+}
+
+#lastcmd {
+  padding: 5px 8px;
+  border-top: 1px solid var(--line);
+  font-size: 11px;
+  white-space: pre-wrap;
+  word-break: break-all;
+  min-height: 26px;
+}
+
+#ftr {
+  display: flex;
+  gap: 4px;
+  padding: 6px 8px;
+  border-top: 1px solid var(--line);
+}
+
+.mini {
+  appearance: none;
+  border: 1px solid var(--line);
+  background: transparent;
+  color: var(--muted);
+  font: inherit;
+  font-size: 10px;
+  padding: 3px 7px;
+  cursor: pointer;
+  border-radius: 3px;
+  letter-spacing: .05em;
+}
+
+.mini:hover { color: var(--fg); border-color: var(--accent); }
+
+#logdlg {
+  width: 100%;
+  max-width: none;
+  height: 78%;
+  max-height: none;
+  margin: 0;
+  padding: 0;
+  background: var(--bg);
+  color: var(--fg);
+  border: 0;
+  border-top: 1px solid var(--line);
+}
+
+#logdlg::backdrop { background: rgba(0,0,0,.6); }
+
+.dlg-hd {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 5px 8px;
+  border-bottom: 1px solid var(--line);
+  font-size: 10px;
+  letter-spacing: .06em;
+  color: var(--muted);
+}
+
+#logbody {
+  margin: 0;
+  padding: 8px;
+  font: 11px/1.4 ui-monospace, Menlo, Consolas, monospace;
+  white-space: pre-wrap;
+  word-break: break-all;
+  max-height: calc(78% - 30px);
+  overflow: auto;
+}
+
+#logbody .r-ACCEPTED { color: var(--ok); }
+#logbody .r-REJECTED { color: var(--bad); }
+#logbody .r-PARTIAL  { color: var(--warn); }
+#logbody .r-AMBIGUOUS_STATE { color: var(--amb); }

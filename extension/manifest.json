@@ -1,0 +1,98 @@
+{
+  "manifest_version": 2,
+  "name": "GCE Don Control Bar",
+  "short_name": "GCE Control",
+  "version": "1.2.0",
+  "description": "Persistent control bar for Don. Dumb emitter and status surface. Carries zero GCE command semantics.",
+  "author": "Nico (build) for Don",
+  "browser_specific_settings": {
+    "gecko": {
+      "id": "gce-don-control-bar@don.local",
+      "strict_min_version": "115.0"
+    }
+  },
+  "permissions": [
+    "storage",
+    "tabs",
+    "activeTab",
+    "downloads",
+    "https://chatgpt.com/*",
+    "https://*.chatgpt.com/*",
+    "https://kimi.com/*",
+    "https://*.kimi.com/*"
+  ],
+  "background": {
+    "scripts": [
+      "lib/protocol.js",
+      "lib/store.js",
+      "background/chatgpt-adapter.js",
+      "background/kimi-adapter.js",
+      "background/main.js"
+    ],
+    "persistent": true
+  },
+  "content_scripts": [
+    {
+      "matches": [
+        "https://chatgpt.com/*",
+        "https://*.chatgpt.com/*"
+      ],
+      "js": [
+        "content/chatgpt-observer.js"
+      ],
+      "run_at": "document_idle",
+      "all_frames": false
+    },
+    {
+      "matches": [
+        "https://kimi.com/*",
+        "https://*.kimi.com/*"
+      ],
+      "js": [
+        "content/kimi-observer.js"
+      ],
+      "run_at": "document_idle",
+      "all_frames": false
+    }
+  ],
+  "sidebar_action": {
+    "default_panel": "sidebar/panel.html",
+    "default_title": "GCE Don Control Bar",
+    "default_icon": "sidebar/icon.svg",
+    "open_at_install": true
+  },
+  "commands": {
+    "cmd-reload-bootstrap": {
+      "suggested_key": { "default": "Ctrl+Alt+1" },
+      "description": "Bootstrap (RELOAD_BOOTSTRAP)"
+    },
+    "cmd-recenter-session": {
+      "suggested_key": { "default": "Ctrl+Alt+2" },
+      "description": "Re-Center (RECENTER_SESSION)"
+    },
+    "cmd-reassert-frame": {
+      "suggested_key": { "default": "Ctrl+Alt+3" },
+      "description": "Frame (REASSERT_FRAME)"
+    },
+    "cmd-show-state": {
+      "suggested_key": { "default": "Ctrl+Alt+4" },
+      "description": "State (SHOW_STATE)"
+    },
+    "cmd-anchor-commit": {
+      "suggested_key": { "default": "Ctrl+Alt+5" },
+      "description": "Anchor (ANCHOR_COMMIT)"
+    },
+    "cmd-create-handoff": {
+      "suggested_key": { "default": "Ctrl+Alt+6" },
+      "description": "Handoff (CREATE_HANDOFF)"
+    },
+    "cmd-end-session": {
+      "suggested_key": { "default": "Ctrl+Alt+7" },
+      "description": "End (END_SESSION)"
+    }
+  },
+  "icons": {
+    "48": "sidebar/icon.svg",
+    "96": "sidebar/icon.svg"
+  }
+}
