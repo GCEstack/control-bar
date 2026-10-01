@@ -78,8 +78,8 @@ body {
 
 /* Branch gets the remaining width and truncates — it is context, not a headline. */
 .ts-branch {
-  flex: 1 1 90px;
-  min-width: 60px;
+  flex: 1 1 70px;
+  min-width: 50px;
 }
 
 .ts-branch .ts-value {
@@ -88,6 +88,27 @@ body {
   font-family: monospace;
   font-size: 10px;
 }
+
+/* DON CORRECTION 7 — top strip was incomplete.
+ * The objective slot ALWAYS renders, with a calm placeholder when there is no
+ * objective. "Where am I" is the question the glance layer must always answer. */
+.ts-objective {
+  flex: 1 1 100%;
+  order: 9;
+  min-width: 0;
+  padding-left: 2px;
+}
+
+.ts-objective-value {
+  font-size: 11.5px;
+  font-weight: 600;
+  color: var(--text-primary);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.ts-objective-value.calm { color: var(--text-muted); font-weight: 500; font-style: italic; }
 
 .freshness-current { color: var(--success); }
 .freshness-stale { color: var(--warning); }
@@ -215,21 +236,31 @@ body {
   border-bottom: 1px solid var(--border);
 }
 
+/* DON CORRECTION 2 — the command row was over-weighted and dominated the surface.
+ * The five verbs are now quiet: low-contrast until invoked, compact, no lift. */
 .vn-btn {
   flex: 1 1 auto;
   min-width: 0;
   white-space: nowrap;
-  padding: 7px 4px;
-  background: var(--bg-tertiary);
+  padding: 6px 4px;
+  background: transparent;
   border: 1px solid var(--border);
-  border-radius: 5px;
-  color: var(--text-primary);
+  border-radius: 4px;
+  color: var(--text-secondary);
   font-size: 10px;
-  font-weight: 600;
+  font-weight: 500;
   letter-spacing: 0;
   cursor: pointer;
-  transition: all 0.15s ease;
+  transition: color 0.15s ease, border-color 0.15s ease, background 0.15s ease;
 }
+
+/* Verbs come forward only on intent. */
+.vn-btn:hover {
+  color: var(--text-primary);
+  border-color: var(--accent);
+}
+
+.vn-btn:focus-visible { outline: 1px solid var(--accent); outline-offset: 1px; }
 
 .vn-btn .vn-label { display: block; }
 
@@ -372,6 +403,37 @@ body {
 
 .table-section.hero .section-hdr { color: var(--accent); }
 
+/* DON CORRECTION 3 — card height must follow content.
+ * Null rows are NOT rendered at all, so an empty CURRENT WORK card collapses
+ * instead of holding vertical space for a column of em-dashes. A card with
+ * nothing in it is hidden; EXCEPTIONS is the exception (ruling: card always
+ * present with a calm "none"). */
+.section-dl:empty { display: none; }
+.table-section.no-rows .section-dl { display: none; }
+.table-section.no-rows[data-section="exceptions"] { display: block; }
+
+/* DON CORRECTION 4 — provenance is secondary diagnostics, not primary content. */
+.table-section[data-section="where"] {
+  background: var(--bg-secondary);
+  border-color: rgba(58, 58, 64, 0.7);
+}
+
+.table-section[data-section="where"] .section-dl { opacity: 0.82; }
+.table-section[data-section="where"] dd { font-size: 10.5px; color: var(--text-secondary); }
+.table-section[data-section="where"] dt { font-size: 9px; }
+
+/* Absorbed post-design schema fields: one compact context line. */
+.context-dl {
+  grid-template-columns: auto 1fr;
+  gap: 3px 8px;
+  margin-top: 8px;
+  padding-top: 7px;
+  border-top: 1px dashed var(--border);
+}
+
+.context-dl dt { font-size: 8.5px; }
+.context-dl dd { font-size: 9.5px; font-family: monospace; color: var(--text-muted); }
+
 /* EXCEPTIONS only appears when something is actually wrong. */
 .table-section.exceptions:empty { display: none; }
 
@@ -415,8 +477,25 @@ body {
 /* EXCEPTIONS rows carry the amber exception treatment. */
 .section-dl dd.exception-value { color: var(--warning); font-weight: 600; }
 
+/* The parked chip IS the park-shelf affordance (Don correction 6: PARKED binds
+ * to the shelf rather than sitting detached in a footer). */
+button.ts-parked {
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  font: inherit;
+}
+
+button.ts-parked:focus-visible { outline: 1px solid var(--accent); outline-offset: 1px; }
+
 /* Park Shelf — parked work is a shelf, not a line item. */
 .park-shelf { margin-bottom: 10px; }
+
+.park-shelf.flash {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 1px var(--accent);
+}
 
 .park-tiles { display: flex; flex-direction: column; gap: 5px; }
 
@@ -525,6 +604,14 @@ body {
 }
 
 .session-tools.open .tools-grid { display: grid; }
+
+.tools-extra {
+  display: flex;
+  gap: 5px;
+  margin-top: 6px;
+}
+
+.session-tools.open .tools-extra { display: flex; }
 
 /* Secondary weight: quieter than the vernacular row by design. */
 .tool-btn {

@@ -2,6 +2,8 @@
   {
     "name": "01-collapsed-default",
     "ready": false,
+    "seat": null,
+    "surface": "chatgpt",
     "measured": {
       "title": "READY:prose",
       "blockerVisible": true,
@@ -19,33 +21,48 @@
       "parkedCount": "2",
       "parkedFlagDrawn": true,
       "heroPresent": false,
-      "heroBorder": "rgba(74, 158, 255, 0.42)",
-      "heroValueFontSize": "14px",
-      "heroValueWeight": "700",
+      "objectiveSlot": true,
+      "objectiveText": "Merge recovered UX onto v1.4.0 spine",
+      "objectiveCalm": false,
+      "seatShown": "SERAFINA",
+      "detachedFooter": false,
+      "logInsideDrawer": true,
       "sections": [
         {
-          "name": "Current Work",
-          "bg": "rgba(0, 0, 0, 0)",
+          "name": "Where Am I",
+          "key": "where",
+          "bg": "rgb(36, 36, 40)",
           "border": "1px",
-          "hasBox": false
-        },
-        {
-          "name": "State & Provenance",
-          "bg": "rgb(45, 45, 50)",
-          "border": "1px",
-          "hasBox": false
+          "hasBox": false,
+          "rows": 7,
+          "noRows": false
         },
         {
           "name": "Exceptions",
+          "key": "exceptions",
           "bg": "rgb(45, 45, 50)",
           "border": "1px",
-          "hasBox": false
+          "hasBox": false,
+          "rows": 3,
+          "noRows": false
+        },
+        {
+          "name": "What Is Happening",
+          "key": "what",
+          "bg": "rgb(45, 45, 50)",
+          "border": "1px",
+          "hasBox": false,
+          "rows": 4,
+          "noRows": false
         },
         {
           "name": "Park Shelf ⏸ 2",
+          "key": "parked",
           "bg": "rgb(45, 45, 50)",
           "border": "1px",
-          "hasBox": false
+          "hasBox": false,
+          "rows": 0,
+          "noRows": false
         }
       ],
       "parkShelfVisible": false,
@@ -78,35 +95,35 @@
       "vernacular": [
         {
           "label": "CAPISCE",
-          "h": 28,
-          "w": 59,
-          "wrapped": false,
-          "truncated": false
-        },
-        {
-          "label": "HOLD",
-          "h": 28,
-          "w": 44,
-          "wrapped": false,
-          "truncated": false
-        },
-        {
-          "label": "BRANCH",
-          "h": 28,
+          "h": 26,
           "w": 58,
           "wrapped": false,
           "truncated": false
         },
         {
+          "label": "HOLD",
+          "h": 26,
+          "w": 46,
+          "wrapped": false,
+          "truncated": false
+        },
+        {
+          "label": "BRANCH",
+          "h": 26,
+          "w": 57,
+          "wrapped": false,
+          "truncated": false
+        },
+        {
           "label": "RE-CENTER",
-          "h": 28,
-          "w": 73,
+          "h": 26,
+          "w": 71,
           "wrapped": false,
           "truncated": false
         },
         {
           "label": "PARK",
-          "h": 28,
+          "h": 26,
           "w": 43,
           "wrapped": false,
           "truncated": false
@@ -122,6 +139,8 @@
   {
     "name": "02-expanded-prose-blockers",
     "ready": false,
+    "seat": null,
+    "surface": "chatgpt",
     "measured": {
       "title": "READY:prose",
       "blockerVisible": true,
@@ -138,34 +157,49 @@
       "parkedText": "2",
       "parkedCount": "2",
       "parkedFlagDrawn": true,
-      "heroPresent": true,
-      "heroBorder": "rgba(74, 158, 255, 0.42)",
-      "heroValueFontSize": "14px",
-      "heroValueWeight": "700",
+      "heroPresent": false,
+      "objectiveSlot": true,
+      "objectiveText": "Merge recovered UX onto v1.4.0 spine",
+      "objectiveCalm": false,
+      "seatShown": "SERAFINA",
+      "detachedFooter": false,
+      "logInsideDrawer": true,
       "sections": [
         {
-          "name": "Current Work",
-          "bg": "rgba(0, 0, 0, 0)",
+          "name": "Where Am I",
+          "key": "where",
+          "bg": "rgb(36, 36, 40)",
           "border": "1px",
-          "hasBox": true
-        },
-        {
-          "name": "State & Provenance",
-          "bg": "rgb(45, 45, 50)",
-          "border": "1px",
-          "hasBox": true
+          "hasBox": true,
+          "rows": 7,
+          "noRows": false
         },
         {
           "name": "Exceptions",
+          "key": "exceptions",
           "bg": "rgb(45, 45, 50)",
           "border": "1px",
-          "hasBox": true
+          "hasBox": true,
+          "rows": 3,
+          "noRows": false
+        },
+        {
+          "name": "What Is Happening",
+          "key": "what",
+          "bg": "rgb(45, 45, 50)",
+          "border": "1px",
+          "hasBox": true,
+          "rows": 4,
+          "noRows": false
         },
         {
           "name": "Park Shelf ⏸ 2",
+          "key": "parked",
           "bg": "rgb(45, 45, 50)",
           "border": "1px",
-          "hasBox": true
+          "hasBox": true,
+          "rows": 0,
+          "noRows": false
         }
       ],
       "parkShelfVisible": true,
@@ -198,35 +232,35 @@
       "vernacular": [
         {
           "label": "CAPISCE",
-          "h": 28,
-          "w": 59,
-          "wrapped": false,
-          "truncated": false
-        },
-        {
-          "label": "HOLD",
-          "h": 28,
-          "w": 44,
-          "wrapped": false,
-          "truncated": false
-        },
-        {
-          "label": "BRANCH",
-          "h": 28,
+          "h": 26,
           "w": 58,
           "wrapped": false,
           "truncated": false
         },
         {
+          "label": "HOLD",
+          "h": 26,
+          "w": 46,
+          "wrapped": false,
+          "truncated": false
+        },
+        {
+          "label": "BRANCH",
+          "h": 26,
+          "w": 57,
+          "wrapped": false,
+          "truncated": false
+        },
+        {
           "label": "RE-CENTER",
-          "h": 28,
-          "w": 73,
+          "h": 26,
+          "w": 71,
           "wrapped": false,
           "truncated": false
         },
         {
           "label": "PARK",
-          "h": 28,
+          "h": 26,
           "w": 43,
           "wrapped": false,
           "truncated": false
@@ -236,12 +270,14 @@
       "anyTruncate": false,
       "tableExpanded": true,
       "contentHidden": false,
-      "panelHeight": 667
+      "panelHeight": 652
     }
   },
   {
     "name": "03-expanded-counted-blockers",
     "ready": false,
+    "seat": null,
+    "surface": "chatgpt",
     "measured": {
       "title": "READY:counted",
       "blockerVisible": true,
@@ -258,34 +294,49 @@
       "parkedText": "",
       "parkedCount": null,
       "parkedFlagDrawn": true,
-      "heroPresent": true,
-      "heroBorder": "rgba(74, 158, 255, 0.42)",
-      "heroValueFontSize": "14px",
-      "heroValueWeight": "700",
+      "heroPresent": false,
+      "objectiveSlot": true,
+      "objectiveText": "Prove the recovered Control Bar renders the ratified hierarchy",
+      "objectiveCalm": false,
+      "seatShown": "NICO",
+      "detachedFooter": false,
+      "logInsideDrawer": true,
       "sections": [
         {
-          "name": "Current Work",
-          "bg": "rgba(0, 0, 0, 0)",
+          "name": "Where Am I",
+          "key": "where",
+          "bg": "rgb(36, 36, 40)",
           "border": "1px",
-          "hasBox": true
-        },
-        {
-          "name": "State & Provenance",
-          "bg": "rgb(45, 45, 50)",
-          "border": "1px",
-          "hasBox": true
+          "hasBox": true,
+          "rows": 6,
+          "noRows": false
         },
         {
           "name": "Exceptions",
+          "key": "exceptions",
           "bg": "rgb(45, 45, 50)",
           "border": "1px",
-          "hasBox": true
+          "hasBox": true,
+          "rows": 3,
+          "noRows": false
+        },
+        {
+          "name": "What Is Happening",
+          "key": "what",
+          "bg": "rgb(45, 45, 50)",
+          "border": "1px",
+          "hasBox": true,
+          "rows": 4,
+          "noRows": false
         },
         {
           "name": "Park Shelf",
+          "key": "parked",
           "bg": "rgb(45, 45, 50)",
           "border": "1px",
-          "hasBox": false
+          "hasBox": false,
+          "rows": 0,
+          "noRows": false
         }
       ],
       "parkShelfVisible": false,
@@ -315,35 +366,35 @@
       "vernacular": [
         {
           "label": "CAPISCE",
-          "h": 28,
-          "w": 59,
-          "wrapped": false,
-          "truncated": false
-        },
-        {
-          "label": "HOLD",
-          "h": 28,
-          "w": 44,
-          "wrapped": false,
-          "truncated": false
-        },
-        {
-          "label": "BRANCH",
-          "h": 28,
+          "h": 26,
           "w": 58,
           "wrapped": false,
           "truncated": false
         },
         {
+          "label": "HOLD",
+          "h": 26,
+          "w": 46,
+          "wrapped": false,
+          "truncated": false
+        },
+        {
+          "label": "BRANCH",
+          "h": 26,
+          "w": 57,
+          "wrapped": false,
+          "truncated": false
+        },
+        {
           "label": "RE-CENTER",
-          "h": 28,
-          "w": 73,
+          "h": 26,
+          "w": 71,
           "wrapped": false,
           "truncated": false
         },
         {
           "label": "PARK",
-          "h": 28,
+          "h": 26,
           "w": 43,
           "wrapped": false,
           "truncated": false
@@ -353,12 +404,14 @@
       "anyTruncate": false,
       "tableExpanded": true,
       "contentHidden": false,
-      "panelHeight": 667
+      "panelHeight": 652
     }
   },
   {
     "name": "04-expanded-calm-unknown",
     "ready": false,
+    "seat": null,
+    "surface": "chatgpt",
     "measured": {
       "title": "READY:calm",
       "blockerVisible": false,
@@ -375,34 +428,49 @@
       "parkedText": "",
       "parkedCount": null,
       "parkedFlagDrawn": true,
-      "heroPresent": true,
-      "heroBorder": "rgba(74, 158, 255, 0.42)",
-      "heroValueFontSize": "14px",
-      "heroValueWeight": "700",
+      "heroPresent": false,
+      "objectiveSlot": true,
+      "objectiveText": "no objective",
+      "objectiveCalm": true,
+      "seatShown": "LUCE",
+      "detachedFooter": false,
+      "logInsideDrawer": true,
       "sections": [
         {
-          "name": "Current Work",
-          "bg": "rgba(0, 0, 0, 0)",
+          "name": "Where Am I",
+          "key": "where",
+          "bg": "rgb(36, 36, 40)",
           "border": "1px",
-          "hasBox": true
-        },
-        {
-          "name": "State & Provenance",
-          "bg": "rgb(45, 45, 50)",
-          "border": "1px",
-          "hasBox": true
+          "hasBox": true,
+          "rows": 2,
+          "noRows": false
         },
         {
           "name": "Exceptions",
+          "key": "exceptions",
           "bg": "rgb(45, 45, 50)",
           "border": "1px",
-          "hasBox": true
+          "hasBox": true,
+          "rows": 1,
+          "noRows": false
+        },
+        {
+          "name": "What Is Happening",
+          "key": "what",
+          "bg": "rgb(45, 45, 50)",
+          "border": "1px",
+          "hasBox": true,
+          "rows": 0,
+          "noRows": true
         },
         {
           "name": "Park Shelf",
+          "key": "parked",
           "bg": "rgb(45, 45, 50)",
           "border": "1px",
-          "hasBox": false
+          "hasBox": false,
+          "rows": 0,
+          "noRows": false
         }
       ],
       "parkShelfVisible": false,
@@ -432,35 +500,35 @@
       "vernacular": [
         {
           "label": "CAPISCE",
-          "h": 28,
-          "w": 59,
-          "wrapped": false,
-          "truncated": false
-        },
-        {
-          "label": "HOLD",
-          "h": 28,
-          "w": 44,
-          "wrapped": false,
-          "truncated": false
-        },
-        {
-          "label": "BRANCH",
-          "h": 28,
+          "h": 26,
           "w": 58,
           "wrapped": false,
           "truncated": false
         },
         {
+          "label": "HOLD",
+          "h": 26,
+          "w": 46,
+          "wrapped": false,
+          "truncated": false
+        },
+        {
+          "label": "BRANCH",
+          "h": 26,
+          "w": 57,
+          "wrapped": false,
+          "truncated": false
+        },
+        {
           "label": "RE-CENTER",
-          "h": 28,
-          "w": 73,
+          "h": 26,
+          "w": 71,
           "wrapped": false,
           "truncated": false
         },
         {
           "label": "PARK",
-          "h": 28,
+          "h": 26,
           "w": 43,
           "wrapped": false,
           "truncated": false
@@ -470,7 +538,814 @@
       "anyTruncate": false,
       "tableExpanded": true,
       "contentHidden": false,
-      "panelHeight": 661
+      "panelHeight": 630
+    }
+  },
+  {
+    "name": "05-seat-coda",
+    "ready": false,
+    "seat": "CODA",
+    "surface": "chatgpt",
+    "measured": {
+      "title": "READY:counted",
+      "blockerVisible": true,
+      "blockerText": "2",
+      "blockerCount": "2",
+      "blockerFlagDrawn": true,
+      "blockerFlagBox": {
+        "w": 8,
+        "h": 10
+      },
+      "blockerColor": "rgb(255, 159, 10)",
+      "blockerIsRed": false,
+      "parkedVisible": false,
+      "parkedText": "",
+      "parkedCount": null,
+      "parkedFlagDrawn": true,
+      "heroPresent": false,
+      "objectiveSlot": true,
+      "objectiveText": "Prove the recovered Control Bar renders the ratified hierarchy",
+      "objectiveCalm": false,
+      "seatShown": "CODA",
+      "detachedFooter": false,
+      "logInsideDrawer": true,
+      "sections": [
+        {
+          "name": "Where Am I",
+          "key": "where",
+          "bg": "rgb(36, 36, 40)",
+          "border": "1px",
+          "hasBox": true,
+          "rows": 6,
+          "noRows": false
+        },
+        {
+          "name": "Exceptions",
+          "key": "exceptions",
+          "bg": "rgb(45, 45, 50)",
+          "border": "1px",
+          "hasBox": true,
+          "rows": 3,
+          "noRows": false
+        },
+        {
+          "name": "What Is Happening",
+          "key": "what",
+          "bg": "rgb(45, 45, 50)",
+          "border": "1px",
+          "hasBox": true,
+          "rows": 4,
+          "noRows": false
+        },
+        {
+          "name": "Park Shelf",
+          "key": "parked",
+          "bg": "rgb(45, 45, 50)",
+          "border": "1px",
+          "hasBox": false,
+          "rows": 0,
+          "noRows": false
+        }
+      ],
+      "parkShelfVisible": false,
+      "parkTiles": [],
+      "nextActionVisible": true,
+      "nextActionText": "Return to Luce for verification",
+      "nextActionButtons": [
+        "Anchor",
+        "Checkpoint",
+        "Promote",
+        "Supersede",
+        "End Session"
+      ],
+      "toolsDrawerOpen": false,
+      "toolsButtons": [
+        "Bootstrap",
+        "Frame",
+        "State",
+        "Checkpoint",
+        "Handoff",
+        "Promote",
+        "Supersede",
+        "End Session",
+        "Release Hold",
+        "Resume Parked"
+      ],
+      "vernacular": [
+        {
+          "label": "CAPISCE",
+          "h": 26,
+          "w": 58,
+          "wrapped": false,
+          "truncated": false
+        },
+        {
+          "label": "HOLD",
+          "h": 26,
+          "w": 46,
+          "wrapped": false,
+          "truncated": false
+        },
+        {
+          "label": "BRANCH",
+          "h": 26,
+          "w": 57,
+          "wrapped": false,
+          "truncated": false
+        },
+        {
+          "label": "RE-CENTER",
+          "h": 26,
+          "w": 71,
+          "wrapped": false,
+          "truncated": false
+        },
+        {
+          "label": "PARK",
+          "h": 26,
+          "w": 43,
+          "wrapped": false,
+          "truncated": false
+        }
+      ],
+      "anyWrap": false,
+      "anyTruncate": false,
+      "tableExpanded": true,
+      "contentHidden": false,
+      "panelHeight": 652
+    }
+  },
+  {
+    "name": "06-seat-enzo",
+    "ready": false,
+    "seat": "ENZO",
+    "surface": "chatgpt",
+    "measured": {
+      "title": "READY:counted",
+      "blockerVisible": true,
+      "blockerText": "2",
+      "blockerCount": "2",
+      "blockerFlagDrawn": true,
+      "blockerFlagBox": {
+        "w": 8,
+        "h": 10
+      },
+      "blockerColor": "rgb(255, 159, 10)",
+      "blockerIsRed": false,
+      "parkedVisible": false,
+      "parkedText": "",
+      "parkedCount": null,
+      "parkedFlagDrawn": true,
+      "heroPresent": false,
+      "objectiveSlot": true,
+      "objectiveText": "Prove the recovered Control Bar renders the ratified hierarchy",
+      "objectiveCalm": false,
+      "seatShown": "ENZO",
+      "detachedFooter": false,
+      "logInsideDrawer": true,
+      "sections": [
+        {
+          "name": "Where Am I",
+          "key": "where",
+          "bg": "rgb(36, 36, 40)",
+          "border": "1px",
+          "hasBox": true,
+          "rows": 6,
+          "noRows": false
+        },
+        {
+          "name": "Exceptions",
+          "key": "exceptions",
+          "bg": "rgb(45, 45, 50)",
+          "border": "1px",
+          "hasBox": true,
+          "rows": 3,
+          "noRows": false
+        },
+        {
+          "name": "What Is Happening",
+          "key": "what",
+          "bg": "rgb(45, 45, 50)",
+          "border": "1px",
+          "hasBox": true,
+          "rows": 4,
+          "noRows": false
+        },
+        {
+          "name": "Park Shelf",
+          "key": "parked",
+          "bg": "rgb(45, 45, 50)",
+          "border": "1px",
+          "hasBox": false,
+          "rows": 0,
+          "noRows": false
+        }
+      ],
+      "parkShelfVisible": false,
+      "parkTiles": [],
+      "nextActionVisible": true,
+      "nextActionText": "Return to Luce for verification",
+      "nextActionButtons": [
+        "Anchor",
+        "Checkpoint",
+        "Promote",
+        "Supersede",
+        "End Session"
+      ],
+      "toolsDrawerOpen": false,
+      "toolsButtons": [
+        "Bootstrap",
+        "Frame",
+        "State",
+        "Checkpoint",
+        "Handoff",
+        "Promote",
+        "Supersede",
+        "End Session",
+        "Release Hold",
+        "Resume Parked"
+      ],
+      "vernacular": [
+        {
+          "label": "CAPISCE",
+          "h": 26,
+          "w": 58,
+          "wrapped": false,
+          "truncated": false
+        },
+        {
+          "label": "HOLD",
+          "h": 26,
+          "w": 46,
+          "wrapped": false,
+          "truncated": false
+        },
+        {
+          "label": "BRANCH",
+          "h": 26,
+          "w": 57,
+          "wrapped": false,
+          "truncated": false
+        },
+        {
+          "label": "RE-CENTER",
+          "h": 26,
+          "w": 71,
+          "wrapped": false,
+          "truncated": false
+        },
+        {
+          "label": "PARK",
+          "h": 26,
+          "w": 43,
+          "wrapped": false,
+          "truncated": false
+        }
+      ],
+      "anyWrap": false,
+      "anyTruncate": false,
+      "tableExpanded": true,
+      "contentHidden": false,
+      "panelHeight": 652
+    }
+  },
+  {
+    "name": "07-seat-serafina",
+    "ready": false,
+    "seat": "SERAFINA",
+    "surface": "chatgpt",
+    "measured": {
+      "title": "READY:prose",
+      "blockerVisible": true,
+      "blockerText": "",
+      "blockerCount": null,
+      "blockerFlagDrawn": true,
+      "blockerFlagBox": {
+        "w": 8,
+        "h": 10
+      },
+      "blockerColor": "rgb(255, 159, 10)",
+      "blockerIsRed": false,
+      "parkedVisible": true,
+      "parkedText": "2",
+      "parkedCount": "2",
+      "parkedFlagDrawn": true,
+      "heroPresent": false,
+      "objectiveSlot": true,
+      "objectiveText": "Merge recovered UX onto v1.4.0 spine",
+      "objectiveCalm": false,
+      "seatShown": "SERAFINA",
+      "detachedFooter": false,
+      "logInsideDrawer": true,
+      "sections": [
+        {
+          "name": "Where Am I",
+          "key": "where",
+          "bg": "rgb(36, 36, 40)",
+          "border": "1px",
+          "hasBox": true,
+          "rows": 7,
+          "noRows": false
+        },
+        {
+          "name": "Exceptions",
+          "key": "exceptions",
+          "bg": "rgb(45, 45, 50)",
+          "border": "1px",
+          "hasBox": true,
+          "rows": 3,
+          "noRows": false
+        },
+        {
+          "name": "What Is Happening",
+          "key": "what",
+          "bg": "rgb(45, 45, 50)",
+          "border": "1px",
+          "hasBox": true,
+          "rows": 4,
+          "noRows": false
+        },
+        {
+          "name": "Park Shelf ⏸ 2",
+          "key": "parked",
+          "bg": "rgb(45, 45, 50)",
+          "border": "1px",
+          "hasBox": true,
+          "rows": 0,
+          "noRows": false
+        }
+      ],
+      "parkShelfVisible": true,
+      "parkTiles": [
+        "voicebridge corpusfrom ▸ 09-28  ·  STALEResume",
+        "v1.3.2 sign-offfrom ▸ 09-30  ·  CURRENTResume"
+      ],
+      "nextActionVisible": true,
+      "nextActionText": "Return recovery report for ruling",
+      "nextActionButtons": [
+        "Anchor",
+        "Checkpoint",
+        "Promote",
+        "Supersede",
+        "End Session"
+      ],
+      "toolsDrawerOpen": false,
+      "toolsButtons": [
+        "Bootstrap",
+        "Frame",
+        "State",
+        "Checkpoint",
+        "Handoff",
+        "Promote",
+        "Supersede",
+        "End Session",
+        "Release Hold",
+        "Resume Parked"
+      ],
+      "vernacular": [
+        {
+          "label": "CAPISCE",
+          "h": 26,
+          "w": 58,
+          "wrapped": false,
+          "truncated": false
+        },
+        {
+          "label": "HOLD",
+          "h": 26,
+          "w": 46,
+          "wrapped": false,
+          "truncated": false
+        },
+        {
+          "label": "BRANCH",
+          "h": 26,
+          "w": 57,
+          "wrapped": false,
+          "truncated": false
+        },
+        {
+          "label": "RE-CENTER",
+          "h": 26,
+          "w": 71,
+          "wrapped": false,
+          "truncated": false
+        },
+        {
+          "label": "PARK",
+          "h": 26,
+          "w": 43,
+          "wrapped": false,
+          "truncated": false
+        }
+      ],
+      "anyWrap": false,
+      "anyTruncate": false,
+      "tableExpanded": true,
+      "contentHidden": false,
+      "panelHeight": 652
+    }
+  },
+  {
+    "name": "08-seat-nico",
+    "ready": false,
+    "seat": "NICO",
+    "surface": "chatgpt",
+    "measured": {
+      "title": "READY:counted",
+      "blockerVisible": true,
+      "blockerText": "2",
+      "blockerCount": "2",
+      "blockerFlagDrawn": true,
+      "blockerFlagBox": {
+        "w": 8,
+        "h": 10
+      },
+      "blockerColor": "rgb(255, 159, 10)",
+      "blockerIsRed": false,
+      "parkedVisible": false,
+      "parkedText": "",
+      "parkedCount": null,
+      "parkedFlagDrawn": true,
+      "heroPresent": false,
+      "objectiveSlot": true,
+      "objectiveText": "Prove the recovered Control Bar renders the ratified hierarchy",
+      "objectiveCalm": false,
+      "seatShown": "NICO",
+      "detachedFooter": false,
+      "logInsideDrawer": true,
+      "sections": [
+        {
+          "name": "Where Am I",
+          "key": "where",
+          "bg": "rgb(36, 36, 40)",
+          "border": "1px",
+          "hasBox": true,
+          "rows": 6,
+          "noRows": false
+        },
+        {
+          "name": "Exceptions",
+          "key": "exceptions",
+          "bg": "rgb(45, 45, 50)",
+          "border": "1px",
+          "hasBox": true,
+          "rows": 3,
+          "noRows": false
+        },
+        {
+          "name": "What Is Happening",
+          "key": "what",
+          "bg": "rgb(45, 45, 50)",
+          "border": "1px",
+          "hasBox": true,
+          "rows": 4,
+          "noRows": false
+        },
+        {
+          "name": "Park Shelf",
+          "key": "parked",
+          "bg": "rgb(45, 45, 50)",
+          "border": "1px",
+          "hasBox": false,
+          "rows": 0,
+          "noRows": false
+        }
+      ],
+      "parkShelfVisible": false,
+      "parkTiles": [],
+      "nextActionVisible": true,
+      "nextActionText": "Return to Luce for verification",
+      "nextActionButtons": [
+        "Anchor",
+        "Checkpoint",
+        "Promote",
+        "Supersede",
+        "End Session"
+      ],
+      "toolsDrawerOpen": false,
+      "toolsButtons": [
+        "Bootstrap",
+        "Frame",
+        "State",
+        "Checkpoint",
+        "Handoff",
+        "Promote",
+        "Supersede",
+        "End Session",
+        "Release Hold",
+        "Resume Parked"
+      ],
+      "vernacular": [
+        {
+          "label": "CAPISCE",
+          "h": 26,
+          "w": 58,
+          "wrapped": false,
+          "truncated": false
+        },
+        {
+          "label": "HOLD",
+          "h": 26,
+          "w": 46,
+          "wrapped": false,
+          "truncated": false
+        },
+        {
+          "label": "BRANCH",
+          "h": 26,
+          "w": 57,
+          "wrapped": false,
+          "truncated": false
+        },
+        {
+          "label": "RE-CENTER",
+          "h": 26,
+          "w": 71,
+          "wrapped": false,
+          "truncated": false
+        },
+        {
+          "label": "PARK",
+          "h": 26,
+          "w": 43,
+          "wrapped": false,
+          "truncated": false
+        }
+      ],
+      "anyWrap": false,
+      "anyTruncate": false,
+      "tableExpanded": true,
+      "contentHidden": false,
+      "panelHeight": 652
+    }
+  },
+  {
+    "name": "09-surface-kimi",
+    "ready": false,
+    "seat": "SERAFINA",
+    "surface": "kimi",
+    "measured": {
+      "title": "READY:counted",
+      "blockerVisible": true,
+      "blockerText": "2",
+      "blockerCount": "2",
+      "blockerFlagDrawn": true,
+      "blockerFlagBox": {
+        "w": 8,
+        "h": 10
+      },
+      "blockerColor": "rgb(255, 159, 10)",
+      "blockerIsRed": false,
+      "parkedVisible": false,
+      "parkedText": "",
+      "parkedCount": null,
+      "parkedFlagDrawn": true,
+      "heroPresent": false,
+      "objectiveSlot": true,
+      "objectiveText": "Prove the recovered Control Bar renders the ratified hierarchy",
+      "objectiveCalm": false,
+      "seatShown": "SERAFINA",
+      "detachedFooter": false,
+      "logInsideDrawer": true,
+      "sections": [
+        {
+          "name": "Where Am I",
+          "key": "where",
+          "bg": "rgb(36, 36, 40)",
+          "border": "1px",
+          "hasBox": true,
+          "rows": 6,
+          "noRows": false
+        },
+        {
+          "name": "Exceptions",
+          "key": "exceptions",
+          "bg": "rgb(45, 45, 50)",
+          "border": "1px",
+          "hasBox": true,
+          "rows": 3,
+          "noRows": false
+        },
+        {
+          "name": "What Is Happening",
+          "key": "what",
+          "bg": "rgb(45, 45, 50)",
+          "border": "1px",
+          "hasBox": true,
+          "rows": 4,
+          "noRows": false
+        },
+        {
+          "name": "Park Shelf",
+          "key": "parked",
+          "bg": "rgb(45, 45, 50)",
+          "border": "1px",
+          "hasBox": false,
+          "rows": 0,
+          "noRows": false
+        }
+      ],
+      "parkShelfVisible": false,
+      "parkTiles": [],
+      "nextActionVisible": true,
+      "nextActionText": "Return to Luce for verification",
+      "nextActionButtons": [
+        "Anchor",
+        "Checkpoint",
+        "Promote",
+        "Supersede",
+        "End Session"
+      ],
+      "toolsDrawerOpen": false,
+      "toolsButtons": [
+        "Bootstrap",
+        "Frame",
+        "State",
+        "Checkpoint",
+        "Handoff",
+        "Promote",
+        "Supersede",
+        "End Session",
+        "Release Hold",
+        "Resume Parked"
+      ],
+      "vernacular": [
+        {
+          "label": "CAPISCE",
+          "h": 26,
+          "w": 58,
+          "wrapped": false,
+          "truncated": false
+        },
+        {
+          "label": "HOLD",
+          "h": 26,
+          "w": 46,
+          "wrapped": false,
+          "truncated": false
+        },
+        {
+          "label": "BRANCH",
+          "h": 26,
+          "w": 57,
+          "wrapped": false,
+          "truncated": false
+        },
+        {
+          "label": "RE-CENTER",
+          "h": 26,
+          "w": 71,
+          "wrapped": false,
+          "truncated": false
+        },
+        {
+          "label": "PARK",
+          "h": 26,
+          "w": 43,
+          "wrapped": false,
+          "truncated": false
+        }
+      ],
+      "anyWrap": false,
+      "anyTruncate": false,
+      "tableExpanded": true,
+      "contentHidden": false,
+      "panelHeight": 652
+    }
+  },
+  {
+    "name": "10-surface-kimi-calm",
+    "ready": false,
+    "seat": "LUCE",
+    "surface": "kimi",
+    "measured": {
+      "title": "READY:calm",
+      "blockerVisible": false,
+      "blockerText": "",
+      "blockerCount": null,
+      "blockerFlagDrawn": true,
+      "blockerFlagBox": {
+        "w": 0,
+        "h": 0
+      },
+      "blockerColor": "rgb(255, 159, 10)",
+      "blockerIsRed": false,
+      "parkedVisible": false,
+      "parkedText": "",
+      "parkedCount": null,
+      "parkedFlagDrawn": true,
+      "heroPresent": false,
+      "objectiveSlot": true,
+      "objectiveText": "Seat frame LUCE",
+      "objectiveCalm": false,
+      "seatShown": "LUCE",
+      "detachedFooter": false,
+      "logInsideDrawer": true,
+      "sections": [
+        {
+          "name": "Where Am I",
+          "key": "where",
+          "bg": "rgb(36, 36, 40)",
+          "border": "1px",
+          "hasBox": true,
+          "rows": 2,
+          "noRows": false
+        },
+        {
+          "name": "Exceptions",
+          "key": "exceptions",
+          "bg": "rgb(45, 45, 50)",
+          "border": "1px",
+          "hasBox": true,
+          "rows": 1,
+          "noRows": false
+        },
+        {
+          "name": "What Is Happening",
+          "key": "what",
+          "bg": "rgb(45, 45, 50)",
+          "border": "1px",
+          "hasBox": true,
+          "rows": 0,
+          "noRows": true
+        },
+        {
+          "name": "Park Shelf",
+          "key": "parked",
+          "bg": "rgb(45, 45, 50)",
+          "border": "1px",
+          "hasBox": false,
+          "rows": 0,
+          "noRows": false
+        }
+      ],
+      "parkShelfVisible": false,
+      "parkTiles": [],
+      "nextActionVisible": true,
+      "nextActionText": "—",
+      "nextActionButtons": [
+        "Anchor",
+        "Checkpoint",
+        "Promote",
+        "Supersede",
+        "End Session"
+      ],
+      "toolsDrawerOpen": false,
+      "toolsButtons": [
+        "Bootstrap",
+        "Frame",
+        "State",
+        "Checkpoint",
+        "Handoff",
+        "Promote",
+        "Supersede",
+        "End Session",
+        "Release Hold",
+        "Resume Parked"
+      ],
+      "vernacular": [
+        {
+          "label": "CAPISCE",
+          "h": 26,
+          "w": 58,
+          "wrapped": false,
+          "truncated": false
+        },
+        {
+          "label": "HOLD",
+          "h": 26,
+          "w": 46,
+          "wrapped": false,
+          "truncated": false
+        },
+        {
+          "label": "BRANCH",
+          "h": 26,
+          "w": 57,
+          "wrapped": false,
+          "truncated": false
+        },
+        {
+          "label": "RE-CENTER",
+          "h": 26,
+          "w": 71,
+          "wrapped": false,
+          "truncated": false
+        },
+        {
+          "label": "PARK",
+          "h": 26,
+          "w": 43,
+          "wrapped": false,
+          "truncated": false
+        }
+      ],
+      "anyWrap": false,
+      "anyTruncate": false,
+      "tableExpanded": true,
+      "contentHidden": false,
+      "panelHeight": 630
     }
   }
 ]

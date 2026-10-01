@@ -344,10 +344,16 @@ async function main() {
     const j = JSON.parse(out);
     const pass = j.foreign_ok === false && j.foreign_reason === "INVALID_SENDER" && j.foreign_nonce === false &&
       j.noSender_ok === false && j.noSender_reason === "INVALID_SENDER" &&
-      j.own_reason !== "INVALID_SENDER" && j.own_nonce === true;
+      j.own_reason !== "INVALID_SENDER" && j.own_nonce === true &&
+      // Identity contract: the envelope is addressed to the seat authoritative
+      // state names, and a caller-supplied `seat` is IGNORED. A hardcoded
+      // DEFAULT_SEAT="CODA" would fail both of these.
+      j.envelopeFollowsState === true && j.envelopeIgnoredDecoy === true;
     record("R16", "F-L-06 GCE_ISSUE refused unless it is our own context", pass,
       "own extension id -> reached the transport and minted a nonce (send then failed on " + j.own_reason +
       ", which is the correct disposition with no ChatGPT tab open); " +
+      "IDENTITY CONTRACT: envelope SEAT=" + j.envelopeSeat + " follows state (" + j.stateSeat +
+      "), decoy seat=" + j.decoySeat + " IGNORED" + (j.envelopeIgnoredDecoy ? "" : "  <-- LEAK") + "; " +
       "foreign extension id -> ok=" + j.foreign_ok + " reason=" + j.foreign_reason + " nonce_minted=" + j.foreign_nonce + "; " +
       "absent sender -> ok=" + j.noSender_ok + " reason=" + j.noSender_reason +
       ". Identity is checked before any nonce exists.");

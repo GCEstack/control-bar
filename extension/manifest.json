@@ -2,7 +2,7 @@
   "manifest_version": 2,
   "name": "GCE Don Control Bar",
   "short_name": "GCE Control",
-  "version": "1.5.0",
+  "version": "1.5.1",
   "description": "Persistent control bar for Don. Dumb emitter and status surface. Carries zero GCE command semantics.",
   "author": "Nico (build) for Don",
   "browser_specific_settings": {

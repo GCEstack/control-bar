@@ -110,16 +110,21 @@ const MEASURE = `
   const cs = (el, p) => (el ? getComputedStyle(el)[p] : null);
   const rect = (el) => { const r = el.getBoundingClientRect(); return { w: Math.round(r.width), h: Math.round(r.height) }; };
 
-  const hero = q(".table-section.hero");
-  const heroVal = hero ? hero.querySelector("dd.hero-value") : null;
-  const blocker = q("#ts-blocker-val");
+const hero = q(".table-section.hero");
+    const blocker = q("#ts-blocker-val");
   const parked = q("#ts-parked-val");
-  const sections = [...d.querySelectorAll(".table-section")].map(s => ({
-    name: (s.querySelector(".section-hdr") || {}).textContent,
-    bg: cs(s, "backgroundColor"),
-    border: cs(s, "borderTopWidth"),
-    hasBox: vis(s)
-  }));
+  const sections = [...d.querySelectorAll(".table-section")].map(s => {
+    const dl = s.querySelector(".section-dl");
+    return {
+      name: (s.querySelector(".section-hdr") || {}).textContent,
+      key: s.getAttribute("data-section"),
+      bg: cs(s, "backgroundColor"),
+      border: cs(s, "borderTopWidth"),
+      hasBox: vis(s),
+      rows: dl ? dl.querySelectorAll("dt").length : 0,
+      noRows: s.classList.contains("no-rows")
+    };
+  });
   const vn = [...d.querySelectorAll(".vn-btn")].map(b => ({
     label: b.textContent.trim(),
     h: Math.round(b.getBoundingClientRect().height),
@@ -144,9 +149,14 @@ const MEASURE = `
     parkedFlagDrawn: !!(parked && parked.querySelector(".chip-flag")),
     // hero
     heroPresent: vis(hero),
-    heroBorder: cs(hero, "borderTopColor"),
-    heroValueFontSize: heroVal ? cs(heroVal, "fontSize") : null,
-    heroValueWeight: heroVal ? cs(heroVal, "fontWeight") : null,
+    // DON CORRECTION 7 — the objective slot always renders, calm when absent.
+    objectiveSlot: vis(q("#ts-objective-val")),
+    objectiveText: (q("#ts-objective-val") || {}).textContent,
+    objectiveCalm: q("#ts-objective-val") ? q("#ts-objective-val").classList.contains("calm") : null,
+    seatShown: (q("#ts-seat-val") || {}).textContent,
+    // DON CORRECTION 6 — no detached footer controls.
+    detachedFooter: !!q(".panel-footer"),
+    logInsideDrawer: !!q("#session-tools #btn-log"),
     // cards
     sections,
     // park shelf
@@ -208,11 +218,22 @@ const MEASURE = `
       { name: "01-collapsed-default", case: "prose", expand: 0 },
       { name: "02-expanded-prose-blockers", case: "prose", expand: 1 },
       { name: "03-expanded-counted-blockers", case: "counted", expand: 1 },
-      { name: "04-expanded-calm-unknown", case: "calm", expand: 1 }
+      { name: "04-expanded-calm-unknown", case: "calm", expand: 1 },
+      // Identity frames — the active seat may be any of them.
+      { name: "05-seat-coda", case: "counted", expand: 1, seat: "CODA" },
+      { name: "06-seat-enzo", case: "counted", expand: 1, seat: "ENZO" },
+      { name: "07-seat-serafina", case: "prose", expand: 1, seat: "SERAFINA" },
+      { name: "08-seat-nico", case: "counted", expand: 1, seat: "NICO" },
+      // Surface frames — ChatGPT vs Kimi must render identically.
+      { name: "09-surface-kimi", case: "counted", expand: 1, surface: "kimi", seat: "SERAFINA" },
+      { name: "10-surface-kimi-calm", case: "calm", expand: 1, surface: "kimi", seat: "LUCE" }
     ];
 
     for (const c of CASES) {
-      const url = `http://127.0.0.1:${PORT}/evidence/render-proof/harness.html?case=${c.case}&expand=${c.expand}`;
+      const params = new URLSearchParams({ case: c.case, expand: String(c.expand) });
+      if (c.seat) params.set("seat", c.seat);
+      if (c.surface) params.set("surface", c.surface);
+      const url = `http://127.0.0.1:${PORT}/evidence/render-proof/harness.html?` + params.toString();
       await m.send("WebDriver:Navigate", { url });
       // wait for the harness to signal it delivered a snapshot
       let ready = false;
@@ -244,7 +265,7 @@ const MEASURE = `
         fs.writeFileSync(path.join(OUT, c.name + "-viewport.png"), Buffer.from(fullB64, "base64"));
       }
 
-      results.push({ name: c.name, ready, measured });
+      results.push({ name: c.name, ready, seat: c.seat || null, surface: c.surface || "chatgpt", measured });
       console.log("##### " + c.name + (ready ? "" : "  [NOT READY]") + " #####");
       console.log(JSON.stringify(measured, null, 2));
       console.log("");
@@ -281,15 +302,32 @@ const MEASURE = `
       checks["parked flag drawn"] = m2.parkedFlagDrawn === true;
     }
     if (m2.tableExpanded) {
-      // Depth-on-demand: when the table is open the cards must be real boxes.
-      checks["cards have borders"] = Array.isArray(m2.sections) &&
-        m2.sections.filter(s => s.hasBox).length >= 3;
-      checks["hero is dominant"] = m2.heroValueWeight === "700" || m2.heroValueWeight === 700;
+      // The design's three-question architecture, restored by key.
+      const keys = Array.isArray(m2.sections) ? m2.sections.map(s => s.key) : [];
+      checks["three-question architecture"] = keys.includes("where") && keys.includes("what");
+      checks["exceptions present"] = keys.includes("exceptions");
+      // DON CORRECTION 5 — exceptions rise directly under WHERE AM I.
+      const whereIdx = keys.indexOf("where");
+      const exIdx = keys.indexOf("exceptions");
+      checks["exceptions under where"] = whereIdx !== -1 && exIdx === whereIdx + 1;
+      // DON CORRECTION 3 — cards with no rows collapse.
+      const collapsed = Array.isArray(m2.sections) && m2.sections.filter(s => s.rows === 0);
+      checks["empty cards collapse"] = !collapsed || collapsed.every(s => s.noRows || s.key === "exceptions" || s.key === "parked");
       checks["next-action bar"] = m2.nextActionVisible === true;
       checks["tools drawer collapsed"] = m2.toolsDrawerOpen === false;
+      // DON CORRECTION 6 — LOG moved into the drawer, footer gone.
+      checks["no detached footer"] = m2.detachedFooter === false;
+      checks["log inside drawer"] = m2.logInsideDrawer === true;
     } else {
       // Collapsed is the DEFAULT: nothing from the depth layer may leak through.
       checks["collapsed hides table"] = m2.contentHidden === true;
+    }
+    // DON CORRECTION 7 — objective slot always renders, calm placeholder when null.
+    checks["objective slot always"] = m2.objectiveSlot === true;
+    checks["objective calm when absent"] = m2.objectiveText ? m2.objectiveText.trim() !== "" : false;
+    // Identity frames: the seat shown must be the one state named, with no default.
+    if (r.seat) {
+      checks["seat from state"] = String(m2.seatShown || "").trim().toUpperCase() === r.seat;
     }
     const bad = Object.entries(checks).filter(([, v]) => !v).map(([k]) => k);
     if (bad.length) fail++;

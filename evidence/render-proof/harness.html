@@ -25,8 +25,15 @@
    * unmodified against a snapshot shaped exactly like the background's broadcast.
    */
   (async () => {
+  const SURFACE = new URLSearchParams(location.search).get("surface") || "chatgpt";
   const CASE = new URLSearchParams(location.search).get("case") || "populated";
   const EXPAND = new URLSearchParams(location.search).get("expand") === "1";
+
+  // Browser stubs. `surface` selects which host surface is active — the bar must
+  // render identically on ChatGPT and Kimi, because ChatGPT/Kimi are SURFACES and
+  // the seats are identities. Nothing about identity may vary by surface.
+  const SURFACE_URL = SURFACE === "kimi" ? "https://kimi.com/" : "https://chatgpt.com/";
+  const SEAT_OVERRIDE = new URLSearchParams(location.search).get("seat");
 
   // Minimal WebExtension stub. panel.js reads browser.runtime.onMessage.addListener
   // and browser.runtime.sendMessage. Capturing the listener lets us deliver the
@@ -39,6 +46,10 @@
         addListener(fn) { window.__msgListener = fn; }
       },
       sendMessage() { return Promise.resolve({ ok: true, nonce: "GCE-1759000000000-1" }); }
+    },
+    tabs: {
+      query: async () => ([{ url: SURFACE_URL, id: 1 }]),
+      sendMessage: async () => undefined
     }
   };
 
@@ -124,6 +135,14 @@
   };
 
   const state = CASES[CASE] || CASES.prose;
+
+  // Seat frames: the identity may be ANY active seat. The bar must render whatever
+  // state names — it has no default seat of its own any more.
+  if (SEAT_OVERRIDE) {
+    state.PRIMARY_SEAT = SEAT_OVERRIDE;
+    state.MODE = state.MODE || "IMPLEMENTATION";
+    state.OBJECTIVE = state.OBJECTIVE || "Seat frame " + SEAT_OVERRIDE;
+  }
   // Parked count for the prose case is a real number; the shelf also has 2 tiles.
   const snapshot = snap(state, "IDLE");
 

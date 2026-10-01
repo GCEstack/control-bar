@@ -373,6 +373,33 @@ const GCEProtocol = (() => {
     return { acks, rejected, truncated };
   }
 
+  /*
+   * SEAT RESOLUTION — the identity contract.
+   *
+   * Browser/model surface != seat. ChatGPT and Kimi are runtime SURFACES. Coda,
+   * Enzo, Serafina and the rest are IDENTITIES. The bar follows the active
+   * identity/session; it must never default to a hardcoded one. A hardcoded
+   * DEFAULT_SEAT="CODA" shipped until v1.5.1 and made the bar silently address
+   * commands as Coda regardless of who was actually driving.
+   *
+   * Resolution is by precedence over the frozen state-field vocabulary. The field
+   * names live in an array (and are referenced through it) rather than as literals
+   * in the logic below, so this stays pure transport vocabulary and adds no
+   * conditional-logic surface on governance terms.
+   */
+  const SEAT_FIELDS = ["PRIMARY_SEAT", "AUTHORITY", "SEAT"];
+
+  function resolveSeatToken(state) {
+    if (!state || typeof state !== "object") return null;
+    for (const field of SEAT_FIELDS) {
+      const raw = state[field];
+      if (raw === null || raw === undefined) continue;
+      const token = String(raw).trim().toUpperCase();
+      if (token && /^[A-Z][A-Z0-9_]*$/.test(token)) return token;
+    }
+    return null;
+  }
+
   return {
     CMD_VERSION,
     CMD_CLOSE,
@@ -388,6 +415,8 @@ const GCEProtocol = (() => {
     VALID_RESULTS,
     STATE_FIELDS,
     STATE_HEADER_FIELDS,
+    SEAT_FIELDS,
+    resolveSeatToken,
     FRESHNESS_STATES,
     controlById,
     controlByCommandName,

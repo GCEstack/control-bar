@@ -24,8 +24,11 @@
       <div class="ts-blocker hidden" id="ts-blocker">
         <span id="ts-blocker-val" class="chip chip-blocker"><i class="chip-flag" aria-hidden="true"></i></span>
       </div>
-      <div class="ts-parked hidden" id="ts-parked">
+      <button type="button" class="ts-parked hidden" id="ts-parked" title="Reveal park shelf" aria-controls="park-shelf">
         <span id="ts-parked-val" class="chip chip-parked"><i class="chip-flag" aria-hidden="true"></i></span>
+      </button>
+      <div class="ts-objective">
+        <span id="ts-objective-val" class="ts-objective-value">—</span>
       </div>
       <div class="ts-branch">
         <span class="ts-label">BRANCH</span>
@@ -45,49 +48,56 @@
     <div class="vernacular-toggles">
       <span class="vn-spacer" aria-hidden="true"></span>
       <button id="btn-expand" class="vn-toggle" aria-expanded="false" aria-controls="table-content">
-        <span class="toggle-icon">▾</span> <span class="toggle-label">TABLE</span>
+        <span class="toggle-icon">▾</span> <span class="toggle-label">SESSION DETAIL</span>
       </button>
     </div>
 
-    <!-- L2: Don Table (expandable) -->
+    <!-- L2: Don Table — the design's three-question architecture, restored.
+         Post-design schema fields are absorbed per design §H rather than dropped. -->
     <section id="don-table" class="don-table collapsed">
 
       <div id="table-content" class="table-content hidden">
-        <!-- CURRENT WORK — the dominant card. Objective carries the heaviest type. -->
-        <div class="table-section hero" data-section="what">
-          <h3 class="section-hdr">Current Work</h3>
-          <dl class="section-dl" id="dl-hero"></dl>
-        </div>
-
-        <!-- STATE & PROVENANCE -->
+        <!-- WHERE AM I -->
         <div class="table-section" data-section="where">
-          <h3 class="section-hdr">State &amp; Provenance</h3>
+          <h3 class="section-hdr">Where Am I</h3>
           <dl class="section-dl" id="dl-where"></dl>
+          <dl class="section-dl context-dl" id="dl-context"></dl>
         </div>
 
-        <!-- EXCEPTIONS — only rows with a value render -->
-        <div class="table-section exceptions" data-section="next">
+        <!-- EXCEPTIONS rises directly under WHERE AM I. The flag chip is the
+             glance layer; this card is where the detail gets explained. -->
+        <div class="table-section exceptions" data-section="exceptions">
           <h3 class="section-hdr">Exceptions</h3>
-          <dl class="section-dl" id="dl-next"></dl>
+          <dl class="section-dl" id="dl-exceptions"></dl>
         </div>
 
-        <!-- PARK SHELF — parked work is a shelf, not a line item -->
+        <!-- WHAT IS HAPPENING -->
+        <div class="table-section" data-section="what">
+          <h3 class="section-hdr">What Is Happening</h3>
+          <dl class="section-dl" id="dl-what"></dl>
+        </div>
+
+        <!-- PARK SHELF — parked work is a shelf, not a line item.
+             Reached from the parked chip in the trust strip. -->
         <div id="park-shelf" class="table-section park-shelf hidden" data-section="parked">
           <h3 class="section-hdr" id="park-shelf-hdr">Park Shelf</h3>
           <div id="park-tiles" class="park-tiles"></div>
         </div>
 
-        <!-- NEXT ACTION — promoted out of the field grid into its own bar -->
+        <!-- WHAT CAN I DO NEXT -->
         <div class="next-action-bar">
           <span class="next-action-label">Next Action</span>
           <span id="next-action-value" class="next-action-value">—</span>
           <div id="next-action-actions" class="next-action-actions"></div>
         </div>
 
-        <!-- Session Tools Drawer (collapsed) -->
+        <!-- Session Tools Drawer. LOG lives here now, not in a detached footer. -->
         <div id="session-tools" class="session-tools">
           <h3 class="section-hdr" id="tools-toggle" role="button" tabindex="0" aria-expanded="false">Session Tools</h3>
           <div id="tools-grid" class="tools-grid"></div>
+          <div class="tools-extra">
+            <button id="btn-log" type="button" class="btn-mini" title="Append-only logs">APPEND-ONLY LOG</button>
+          </div>
         </div>
       </div>
     </section>
@@ -151,12 +161,7 @@
       </div>
     </dialog>
 
-    <!-- Footer -->
-    <footer id="ftr" class="panel-footer">
-      <button id="btn-log" type="button" class="btn-mini" title="Append-only logs">LOG</button>
-      <button id="btn-park-shelf" type="button" class="btn-mini" title="View parked lines">PARKED</button>
-    </footer>
-  </div>
+    </div>
 
   <script src="../lib/protocol.js"></script>
   <script src="panel.js"></script>

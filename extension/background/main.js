@@ -164,9 +164,28 @@ function createCore({ protocol, store, adapter, adapterFn, now, sentTimeoutMs = 
     };
   }
 
+  /*
+   * The seat that commands are addressed to.
+   *
+   * Production never passes one. It is resolved from AUTHORITATIVE STATE — the
+   * last seat-authored snapshot — so the bar follows the active identity instead
+   * of a hardcoded one. The explicit argument survives only so the test harness
+   * can drive a scenario deterministically; no production call site uses it.
+   */
+  async function resolveSeat(explicit) {
+    if (explicit) {
+      const token = String(explicit).trim().toUpperCase();
+      if (token && /^[A-Z][A-Z0-9_]*$/.test(token)) return token;
+    }
+    const record = await store.getLastState();
+    return protocol.resolveSeatToken(record ? record.state : null);
+  }
+
   async function issue(commandId, seat, payload) {
-    const seatToken = String(seat || "").trim().toUpperCase();
+    const seatToken = await resolveSeat(seat);
     if (!seatToken) {
+      // Honest failure. Before any seat has published state the bar has no idea
+      // who it is addressing, and it says so rather than guessing.
       return { ok: false, topState: "NO_ACTIVE_SEAT", reason: "NO_SEAT" };
     }
     if (!protocol.isKnownControl(commandId)) {
@@ -367,7 +386,6 @@ if (typeof browser !== "undefined" && browser.runtime && browser.runtime.id &&
 
   const core = createCore({ protocol, store, adapter: GCEChatGPTAdapter, adapterFn: detectAdapter });
   let currentAdapter = GCEChatGPTAdapter;
-  const DEFAULT_SEAT = "CODA";
 
   // ---- keyboard shortcuts via the commands API (spec §4) ----
   browser.commands.onCommand.addListener((name) => {
@@ -375,7 +393,8 @@ if (typeof browser !== "undefined" && browser.runtime && browser.runtime.id &&
     if (!control) return;
     detectAdapter().then((adapter) => {
       currentAdapter = adapter;
-      core.issue(control.id, DEFAULT_SEAT);
+      // No seat argument: the core resolves the active identity from state.
+      core.issue(control.id);
     });
   });
 
@@ -418,7 +437,10 @@ if (typeof browser !== "undefined" && browser.runtime && browser.runtime.id &&
       }
       return detectAdapter().then((adapter) => {
         currentAdapter = adapter;
-        return core.issue(msg.commandId, msg.seat || DEFAULT_SEAT, msg.payload).then((result) => {
+        // No seat argument: the panel cannot choose the identity either. The core
+        // resolves it from authoritative state, so a tampered panel cannot redirect
+        // a command at a seat the active session does not belong to.
+        return core.issue(msg.commandId, undefined, msg.payload).then((result) => {
           return { ...result, commandId: msg.commandId };
         });
       });
@@ -439,8 +461,11 @@ if (typeof browser !== "undefined" && browser.runtime && browser.runtime.id &&
       return Promise.resolve({ ok: true });
     }
     if (msg.type === "GCE_WRITE_FINDINGS") {
-      // GCE FINDINGS OUTPUT — AUTO-FIRE for browser surfaces
-      const seat = msg.seat || "UNKNOWN";
+      // GCE FINDINGS OUTPUT — AUTO-FIRE for browser surfaces.
+      // A findings artifact must be filed under the ACTIVE identity, not under a
+      // hardcoded one or a literal "UNKNOWN" — same contract as command addressing.
+      return resolveSeat(msg.seat).then((resolvedSeat) => {
+        const seat = resolvedSeat || "UNIDENTIFIED";
       const source = msg.source || "auto";
       const findings = msg.findings || "";
       const timestamp = new Date().toISOString().replace(/[:.]/g, "-");
@@ -465,7 +490,8 @@ if (typeof browser !== "undefined" && browser.runtime && browser.runtime.id &&
         });
         return { ok: true, filename: filename, downloadId: downloadId };
       }).catch((err) => {
-        return { ok: false, error: String(err) };
+          return { ok: false, error: String(err) };
+        });
       });
     }
     return undefined;

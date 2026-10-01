@@ -1,8 +1,10 @@
 "use strict";
 
 (function() {
-  const DEFAULT_SEAT = "CODA";
-
+  // No DEFAULT_SEAT. The panel never chooses the identity — the background resolves
+  // it from authoritative state. A hardcoded default here shipped until v1.5.1 and
+  // made the surface address commands as one seat regardless of who was driving.
+  // The panel header likewise reads PRIMARY_SEAT/AUTHORITY off the live snapshot.
   const el = {};
 
   let currentSnapshot = null;
@@ -56,9 +58,10 @@
     el.donTable = document.getElementById("don-table");
     el.btnExpand = document.getElementById("btn-expand");
     el.tableContent = document.getElementById("table-content");
-    el.dlHero = document.getElementById("dl-hero");
     el.dlWhere = document.getElementById("dl-where");
-    el.dlNext = document.getElementById("dl-next");
+    el.dlContext = document.getElementById("dl-context");
+    el.dlExceptions = document.getElementById("dl-exceptions");
+    el.dlWhat = document.getElementById("dl-what");
     el.parkShelf = document.getElementById("park-shelf");
     el.parkShelfHdr = document.getElementById("park-shelf-hdr");
     el.parkTiles = document.getElementById("park-tiles");
@@ -67,6 +70,7 @@
     el.sessionTools = document.getElementById("session-tools");
     el.toolsToggle = document.getElementById("tools-toggle");
     el.toolsGrid = document.getElementById("tools-grid");
+    el.tsObjectiveVal = document.getElementById("ts-objective-val");
     el.statusLine = document.getElementById("status-line");
     el.logDlg = document.getElementById("logdlg");
     el.logBody = document.getElementById("logbody");
@@ -81,13 +85,11 @@
     el.parkDlg = document.getElementById("park-dlg");
     el.parkList = document.getElementById("park-list");
     el.btnParkClose = document.getElementById("btn-park-close");
-    el.btnParkShelf = document.getElementById("btn-park-shelf");
-    el.endDlg = document.getElementById("end-dlg");
-    el.endSummary = document.getElementById("end-summary");
+el.btnParkShelf = document.getElementById("ts-parked");
+    el.btnParkClose = document.getElementById("btn-park-close");
     el.btnEndClose = document.getElementById("btn-end-close");
     el.btnEndCancel = document.getElementById("btn-end-cancel");
-    el.btnEndConfirm = document.getElementById("btn-end-confirm");
-    el.ftr = document.getElementById("ftr");
+el.btnEndConfirm = document.getElementById("btn-end-confirm");
   }
 
   function fmtFreshness(val) {
@@ -148,6 +150,11 @@
     el.tsFreshness.className = "ts-value freshness-" + freshness.toLowerCase();
 
     el.tsBranch.textContent = s.CURRENT_BRANCH || s.CURRENT_ANCHOR || "—";
+
+    // DON CORRECTION 7 — the objective slot always renders. Calm when absent.
+    const objective = val(s.OBJECTIVE);
+    el.tsObjectiveVal.textContent = objective === null ? "no objective" : objective;
+    el.tsObjectiveVal.classList.toggle("calm", objective === null);
 
     // Blockers -> amber exception chip. Bare flag when the seat sent prose.
     const hasBlockers =
@@ -235,50 +242,76 @@
     }
   }
 
+  /*
+   * A row is only rendered when it carries a value. DON CORRECTION 3: card height
+   * follows content, so null fields must not reserve vertical space. EXCEPTIONS is
+   * the one exception by ruling — its card is always present and says "none" calmly.
+   */
+  function val(v) {
+    if (v === null || v === undefined) return null;
+    const s = String(v).trim();
+    if (s === "" || s === "0" && false) return null;
+    return s;
+  }
+
+  function rowList(pairs) {
+    return pairs.filter(([, v]) => val(v) !== null);
+  }
+
   function renderDonTable(snapshot) {
     const s = snapshot || {};
-    const dash = (v) => (v === null || v === undefined || String(v).trim() === "" ? "—" : v);
 
-    // --- CURRENT WORK (hero card). Objective carries the heaviest type.
-    renderDlSection(el.dlHero, [
-      ["Objective", dash(s.OBJECTIVE), "hero-label", "hero-value"],
-      ["Current Task", dash(s.CURRENT_TASK), "", "sub-value"],
-      ["Don Intent", dash(s.DON_INTENT), "", "sub-value"],
-      ["Branch", dash(s.CURRENT_BRANCH), "", ""],
-      ["Promoted", dash(s.PROMOTED_CURRENT), "", ""],
-      ["Confidence", s.CONFIDENCE ? s.CONFIDENCE + "%" : "—", "", ""],
-      ["Checkpoint", dash(s.CHECKPOINT), "", ""]
+    // --- WHERE AM I. Objective lives in the top strip (Don correction 7).
+    const whereRows = rowList([
+      ["Mode", val(s.MODE)],
+      ["Branch", val(s.CURRENT_BRANCH)],
+      ["Origin Anchor", val(s.ORIGINATING_ANCHOR), "mono-label", "mono-value"],
+      ["Promoted", val(s.PROMOTED_CURRENT)],
+      ["Confidence", val(s.CONFIDENCE) ? s.CONFIDENCE + "%" : null],
+      ["Freshness", val(s.STATE_FRESHNESS)],
+      ["State As Of", val(s.STATE_AS_OF), "mono-label", "mono-value"]
     ]);
+    renderDlSection(el.dlWhere, whereRows);
+    markSectionRows(el.dlWhere.closest(".table-section"), whereRows.length > 0);
 
-    // --- STATE & PROVENANCE
-    renderDlSection(el.dlWhere, [
-      ["Session", dash(s.SESSION_ID), "mono-label", "mono-value"],
-      ["Status", dash(s.SESSION_STATUS), "", ""],
-      ["Project", dash(s.PROJECT), "", ""],
-      ["Workstream", dash(s.WORKSTREAM), "", ""],
-      ["Origin Anchor", dash(s.ORIGINATING_ANCHOR), "mono-label", "mono-value"],
-      ["Current Anchor", dash(s.CURRENT_ANCHOR), "mono-label", "mono-value"],
-      ["State As Of", dash(s.STATE_AS_OF), "mono-label", "mono-value"]
+    // Absorbed post-design schema fields, on one compact diagnostics line.
+    const ctxRows = rowList([
+      ["Session", val(s.SESSION_ID)],
+      ["Status", val(s.SESSION_STATUS)],
+      ["Project", val(s.PROJECT)],
+      ["Workstream", val(s.WORKSTREAM)]
     ]);
+    renderDlSection(el.dlContext, ctxRows.map(([k, v]) => [k, v, "", ""]));
 
-    // --- EXCEPTIONS. Only rows that actually carry a value render.
-    const exceptions = [
-      ["⚑ Blockers", dash(s.BLOCKERS), "exception-value"],
-      ["Handoff", dash(s.HANDOFF_STATE), ""],
-      ["Next Route", dash(s.NEXT_ROUTE), ""],
-      ["Blocker Route", dash(s.BLOCKER_ROUTE), ""]
-    ].filter(([, v]) => v !== "—");
-
-    renderDlSection(el.dlNext, exceptions.map(([l, v, c]) => [l, v, "", c]));
-
-    // If nothing is wrong, the card says so calmly rather than rendering four dashes.
-    if (exceptions.length === 0) {
-      renderDlSection(el.dlNext, [["Exceptions", "none — calm", "", ""]]);
+    // --- EXCEPTIONS. Rows only when values exist; card always present.
+    const exRows = rowList([
+      ["⚑ Blockers", val(s.BLOCKERS), "", "exception-value"],
+      ["Handoff", val(s.HANDOFF_STATE)],
+      ["Blocker Route", val(s.BLOCKER_ROUTE)],
+      ["Parked", val(s.PARKED)]
+    ]);
+    if (exRows.length === 0) {
+      renderDlSection(el.dlExceptions, [["Exceptions", "none — calm", "", ""]]);
+    } else {
+      renderDlSection(el.dlExceptions, exRows);
     }
-    el.dlNext.closest(".table-section").classList.toggle("is-empty", exceptions.length === 0);
+
+    // --- WHAT IS HAPPENING.
+    const whatRows = rowList([
+      ["Current Task", val(s.CURRENT_TASK), "", "sub-value"],
+      ["Don Intent", val(s.DON_INTENT), "", "sub-value"],
+      ["Checkpoint", val(s.CHECKPOINT)],
+      ["Next Route", val(s.NEXT_ROUTE)]
+    ]);
+    renderDlSection(el.dlWhat, whatRows);
+    markSectionRows(el.dlWhat.closest(".table-section"), whatRows.length > 0);
 
     renderParkShelf(s);
     renderNextAction(s);
+  }
+
+  function markSectionRows(section, hasRows) {
+    if (section) section.classList.toggle("no-rows", !hasRows);
   }
 
   /*
@@ -669,7 +702,16 @@
       issueCommand("BRANCH", true, { branchName: name, origin: origin || null });
       el.branchDlg.close();
     });
-    el.btnParkShelf.addEventListener("click", openParkDialog);
+    // DON CORRECTION 6 — the parked chip reveals the park shelf. The footer button
+    // that used to sit detached from it is gone.
+    el.btnParkShelf.addEventListener("click", () => {
+      if (!el.tableContent.classList.contains("hidden")) {
+        el.parkShelf.scrollIntoView({ block: "nearest" });
+        el.parkShelf.classList.add("flash");
+        setTimeout(() => el.parkShelf.classList.remove("flash"), 700);
+      }
+      openParkDialog();
+    });
     el.btnParkClose.addEventListener("click", () => el.parkDlg.close());
     el.btnEndClose.addEventListener("click", () => el.endDlg.close());
     el.btnEndCancel.addEventListener("click", () => el.endDlg.close());
