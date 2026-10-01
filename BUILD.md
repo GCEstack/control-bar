@@ -3,14 +3,18 @@
 ## Version
 
 ```
-1.2.1
+1.5.1
 ```
 
 ## Git Commit
 
 ```
-314ccb1 v1.2.1: Add browser_action popup as sidebar fallback; fix panel entrypoint
+247887a  v1.5.1: identity contract + three-question restoration + Don's seven corrections
+daa1848  render proof: unwrap Marionette script return before the READY check
 ```
+
+`962f283` (v1.4.0) is the frozen spine. It is an ancestor of HEAD and must
+stay that way.
 
 ## Source Location
 
@@ -18,61 +22,75 @@
 C:\Users\Dekan AI Brother\GCE_DON\command-center\control-bar\
 ```
 
-## Permanent Floorp Deployment
+## INSTALL (the only supported path)
 
-### Current State
-- Extension is loaded via about:debugging (temporary load)
-- This requires manual reload after Floorp restart
+```
+node tools/install-live.js --xpi gce-don-control-bar-1.5.1.xpi
+```
 
-### Permanent Installation Method
+This installs through the browser's own AddonManager (Marionette
+`Addon:Install`) into Don's live profile, then verifies from the profile's own
+`extensions.json`. If the browser accepts the package but does not register
+it, the verdict is `NOT PROVEN` — an install that cannot be seen in the
+registration record is not an install.
 
-1. **Package the extension:**
-   - Open about:debugging in Floorp
-   - Click "Load Temporary Add-on..."
-   - Navigate to: `C:\Users\Dekan AI Brother\GCE_DON\command-center\control-bar\extension\manifest.json`
-   - The extension ID is: `gce-don-control-bar@don.local`
+**Close Floorp first.** The script refuses to run while it is open, because a
+live profile is locked and the install would be overwritten on next launch.
 
-2. **Make it permanent (for this profile):**
-   - The extension loads into profile: `h6q809pa.default-release`
-   - Data stored in: `browser-extension-data\gce-don-control-bar@don.local`
-   - Floorp stores temporary extensions in browser-extension-data
-   - To make permanent: extension needs to be signed OR installed as a "development" extension
+## Do NOT use `install-permanent.ps1` to install
 
-3. **For full permanence (requires signing):**
-   - Submit to Floorp add-on store, OR
-   - Use Firefox developer/signing pipeline, OR
-   - Keep as "temporary" but document the reload procedure
+It extracts the XPI into
+`%APPDATA%\Floorp\Profiles\<profile>\browser-extension-data\<id>\` and reports
+success. That directory is an extension **data** directory, not a code load
+path — a folder dropped there cannot execute. This was confirmed on the live
+profile: 13 files, manifest v1.2.0, and no entry in any `extensions.json`.
 
-### Upgrade Procedure
+The script is retained for history and now fails loudly instead of claiming
+success: it resolves its version from `manifest.json` rather than a hardcoded
+`1.2.0`, refuses to run when the requested package is absent, backs up what it
+is about to overwrite, and fails if the on-disk version does not match the
+request.
 
-1. Stop Floorp
-2. Backup: `cp -r extension extension.backup`
-3. Pull new version from Git
-4. Open about:debugging
-5. Click "Reload" on the extension
-6. Verify in sidebar
+## State as of 2026-10-01
 
-### Rollback
+| Property | Value |
+|---|---|
+| Installed version | **1.5.1**, ACTIVE, `app-profile`, unsigned |
+| Live profile | `h6q809pa.default-release` |
+| Extension id | `gce-don-control-bar@don.local` |
+| Stale data dir | removed (backed up as `...browser-extension-data\gce-don-control-bar@don.local.backup-v1.2.0-inertdata-*`) |
 
-1. Stop Floorp
-2. Restore: `rm -rf extension; mv extension.backup extension`
-3. Open about:debugging
-4. Click "Reload" on the extension
-5. Commit hash: `git log --oneline -1` to verify
+## Temporary load (for development only)
 
-## Test Commands
+`about:debugging` → Load Temporary Add-on → `extension\manifest.json`. This
+disappears on close. It is not how the shipped build is deployed.
+
+## Rollback
+
+1. Close Floorp.
+2. Restore `extensions.json` from the `.gcecb-backup-*` file next to it, or
+   install a known-good XPI: `node tools/install-live.js --xpi <old>.xpi`.
+3. Reopen and confirm in `about:addons`.
+
+## Test commands
 
 ```bash
-# Run core tests
-cd C:\Users\Dekan AI Brother\GCE_DON\command-center\control-bar\test
-node run-tests.js
+cd C:\Users\Dekan AI Brother\GCE_DON\command-center\control-bar
 
-# Run regression probes
-node regression-probes.js
-
-# Check manifest
-cat extension/manifest.json | jq .version
+node build-xpi.js                                    # package
+node test/run-tests.js                               # T1-T8        9/9
+node test/surface-integration-test.js                # surface     14/14
+node test/real-handshake-fidelity.js                 # handshake   13/13
+node test/security-regression.js                     # security    all
+node test/regression-probes.js                       # probes   15/16 (R8 open)
+node test/native-install-proof.js gce-don-control-bar-1.5.1.xpi
+node evidence/render-proof/shoot.js                  # render     10/10
 ```
+
+R8 ("Zero GCE semantics in extension") is open by order: the presentation layer
+reads `AUTHORITY` and `BLOCKERS` to decide how to render a seat label and
+whether a blocker count is zero. Reading a GCE field in order to display it is
+the panel's job.
 
 ## Architecture Summary
 

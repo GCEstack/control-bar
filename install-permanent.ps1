@@ -4,13 +4,38 @@
 
 param(
     [string]$Profile = "h6q809pa.default-release",
-    [string]$Version = "1.2.0"
+    # Defaults to the CURRENT build. It was pinned at 1.2.0, so running this
+    # script with no arguments installed the oldest XPI in the tree while
+    # printing a success message. The default now follows manifest.json, and a
+    # missing package is a hard error rather than a silent fallback to the
+    # source directory.
+    [string]$Version = ""
 )
 
 $ErrorActionPreference = "Stop"
 
 $EXTENSION_ID = "gce-don-control-bar@don.local"
+
+# Resolve the version from the built extension when the caller did not name one.
+if ([string]::IsNullOrWhiteSpace($Version)) {
+    $manifestCandidate = Join-Path $PSScriptRoot "extension\manifest.json"
+    if (-not (Test-Path $manifestCandidate)) {
+        Write-Error "No version given and extension\manifest.json is missing. Pass -Version explicitly."
+        exit 1
+    }
+    $Version = (Get-Content $manifestCandidate | ConvertFrom-Json).version
+}
+
 $PACKAGE_PATH = Join-Path $PSScriptRoot "gce-don-control-bar-$Version.xpi"
+
+if (-not (Test-Path $PACKAGE_PATH)) {
+    Write-Error "Package not found: $PACKAGE_PATH"
+    Write-Host ""
+    Write-Host "Available packages:"
+    Get-ChildItem $PSScriptRoot -Filter "gce-don-control-bar-*.xpi" |
+        ForEach-Object { Write-Host "  $($_.Name)" }
+    exit 1
+}
 
 # Find Floorp profile directory
 $PROFILE_ROOT = Join-Path $env:APPDATA "Floorp\Profiles"
@@ -35,24 +60,36 @@ if (-not (Test-Path $EXTENSION_INSTALL_DIR)) {
     New-Item -ItemType Directory -Path $EXTENSION_INSTALL_DIR -Force | Out-Null
 }
 
-# Copy extension files
-if (Test-Path $PACKAGE_PATH) {
-    # It's a packaged extension - extract to extension directory
-    # PowerShell Expand-Archive rejects .xpi even though it's ZIP format
-    # Workaround: copy to temp .zip, extract, then remove temp file
-    $tempZip = [System.IO.Path]::Combine($env:TEMP, "gce-temp-install-$([System.Guid]::NewGuid().ToString('N')).zip")
-    try {
-        Copy-Item -Path $PACKAGE_PATH -Destination $tempZip -Force
-        Expand-Archive -Path $tempZip -DestinationPath $EXTENSION_INSTALL_DIR -Force
-        Write-Host "Extracted extension package"
-    } finally {
-        if (Test-Path $tempZip) { Remove-Item -Path $tempZip -Force }
+# Back up whatever is installed before overwriting it, so a failed install is
+# recoverable and the previous version stays inspectable.
+if (Test-Path $EXTENSION_INSTALL_DIR) {
+    $existingManifest = Join-Path $EXTENSION_INSTALL_DIR "manifest.json"
+    $existingVersion = "unknown"
+    if (Test-Path $existingManifest) {
+        try { $existingVersion = (Get-Content $existingManifest | ConvertFrom-Json).version }
+        catch { $existingVersion = "unreadable" }
     }
-} else {
-    # Source directory - copy directly
-    $SOURCE_PATH = Join-Path $PSScriptRoot "extension"
-    Copy-Item -Path "$SOURCE_PATH\*" -Destination $EXTENSION_INSTALL_DIR -Recurse -Force
-    Write-Host "Copied extension from source"
+    if ($existingVersion -ne $Version) {
+        $backup = "$EXTENSION_INSTALL_DIR.backup-v$existingVersion"
+        if (Test-Path $backup) { Remove-Item -Path $backup -Recurse -Force }
+        Copy-Item -Path $EXTENSION_INSTALL_DIR -Destination $backup -Recurse -Force
+        Write-Host "Backed up installed v$existingVersion -> $backup"
+    } else {
+        Write-Host "Installed copy is already v$Version - overwriting in place"
+    }
+}
+
+# PowerShell Expand-Archive rejects .xpi even though it is ZIP format, so copy
+# to a temp .zip, extract, then remove the temp file. No source-directory
+# fallback: installing a tree is not the same act as installing a package, and
+# silently doing the other one is how a stale build reaches a profile.
+$tempZip = [System.IO.Path]::Combine($env:TEMP, "gce-temp-install-$([System.Guid]::NewGuid().ToString('N')).zip")
+try {
+    Copy-Item -Path $PACKAGE_PATH -Destination $tempZip -Force
+    Expand-Archive -Path $tempZip -DestinationPath $EXTENSION_INSTALL_DIR -Force
+    Write-Host "Extracted $PACKAGE_PATH"
+} finally {
+    if (Test-Path $tempZip) { Remove-Item -Path $tempZip -Force }
 }
 
 # Create manifest with installation metadata
@@ -91,10 +128,19 @@ if (Test-Path $manifestPath) {
         }
     }
     if ($missingFiles.Count -gt 0) {
-        Write-Warning "Warning: Missing files: $($missingFiles -join ', ')"
-    } else {
-        Write-Host "VERIFIED: All core files present"
+        Write-Error "FAILED: Missing files: $($missingFiles -join ', ')"
+        exit 1
     }
+    Write-Host "VERIFIED: All core files present"
+
+    # The version on disk must be the version that was requested. A copy that
+    # silently landed an older package is the exact failure this script had.
+    $installedVersion = $manifest.version
+    if ($installedVersion -ne $Version) {
+        Write-Error "FAILED: requested v$Version but manifest reports v$installedVersion"
+        exit 1
+    }
+    Write-Host "VERIFIED: on-disk version matches request (v$installedVersion)"
 } else {
     Write-Error "FAILED: manifest.json not found in installation directory - installation may have failed"
     exit 1
