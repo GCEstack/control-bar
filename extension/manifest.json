@@ -2,7 +2,7 @@
   "manifest_version": 2,
   "name": "GCE Don Control Bar",
   "short_name": "GCE Control",
-  "version": "1.2.0",
+  "version": "1.4.0",
   "description": "Persistent control bar for Don. Dumb emitter and status surface. Carries zero GCE command semantics.",
   "author": "Nico (build) for Don",
   "browser_specific_settings": {
@@ -55,6 +55,11 @@
       "all_frames": false
     }
   ],
+  "browser_action": {
+    "default_popup": "sidebar/panel.html",
+    "default_title": "GCE Don Control Bar",
+    "default_icon": "sidebar/icon.svg"
+  },
   "sidebar_action": {
     "default_panel": "sidebar/panel.html",
     "default_title": "GCE Don Control Bar",
@@ -62,6 +67,22 @@
     "open_at_install": true
   },
   "commands": {
+    "cmd-capisce": {
+      "suggested_key": { "default": "Ctrl+Shift+C" },
+      "description": "CAPISCE"
+    },
+    "cmd-hold": {
+      "suggested_key": { "default": "Ctrl+Shift+H" },
+      "description": "HOLD"
+    },
+    "cmd-branch": {
+      "suggested_key": { "default": "Ctrl+Shift+B" },
+      "description": "BRANCH"
+    },
+    "cmd-park": {
+      "suggested_key": { "default": "Ctrl+Shift+P" },
+      "description": "PARK"
+    },
     "cmd-reload-bootstrap": {
       "suggested_key": { "default": "Ctrl+Alt+1" },
       "description": "Bootstrap (RELOAD_BOOTSTRAP)"
@@ -80,7 +101,7 @@
     },
     "cmd-anchor-commit": {
       "suggested_key": { "default": "Ctrl+Alt+5" },
-      "description": "Anchor (ANCHOR_COMMIT)"
+      "description": "Checkpoint (ANCHOR_COMMIT)"
     },
     "cmd-create-handoff": {
       "suggested_key": { "default": "Ctrl+Alt+6" },
@@ -88,7 +109,15 @@
     },
     "cmd-end-session": {
       "suggested_key": { "default": "Ctrl+Alt+7" },
-      "description": "End (END_SESSION)"
+      "description": "End Session (END_SESSION)"
+    },
+    "cmd-promote": {
+      "suggested_key": { "default": "Ctrl+Alt+8" },
+      "description": "Promote (PROMOTE)"
+    },
+    "cmd-supersede": {
+      "suggested_key": { "default": "Ctrl+Alt+9" },
+      "description": "Supersede (SUPERSEDE)"
     }
   },
   "icons": {

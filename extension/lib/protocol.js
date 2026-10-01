@@ -23,24 +23,47 @@ const GCEProtocol = (() => {
   const FRAME_CURRENT = "CURRENT";
 
   // Frozen spec §4 control surface. order is display order.
-  const CONTROLS = [
+  // VERNACULAR ROW (L1) - Don's primary interaction layer
+  const VERNACULAR_CONTROLS = [
+    { id: "CAPISCE", label: "CAPISCE", key: "cmd-capisce", isVernacular: true },
+    { id: "HOLD", label: "HOLD", key: "cmd-hold", isVernacular: true, supportsLatch: true },
+    { id: "BRANCH", label: "BRANCH", key: "cmd-branch", isVernacular: true },
+    { id: "RECENTER_SESSION", label: "RE-CENTER", key: "cmd-recenter-session", isVernacular: true },
+    { id: "PARK", label: "PARK", key: "cmd-park", isVernacular: true }
+  ];
+
+  // SESSION TOOLS - maintenance controls in drawer
+  const SESSION_TOOLS = [
     { id: "RELOAD_BOOTSTRAP", label: "Bootstrap", key: "cmd-reload-bootstrap" },
-    { id: "RECENTER_SESSION", label: "Re-Center", key: "cmd-recenter-session" },
     { id: "REASSERT_FRAME", label: "Frame", key: "cmd-reassert-frame" },
     { id: "SHOW_STATE", label: "State", key: "cmd-show-state" },
-    { id: "ANCHOR_COMMIT", label: "Anchor", key: "cmd-anchor-commit" },
+    { id: "ANCHOR_COMMIT", label: "Checkpoint", key: "cmd-anchor-commit" },
     { id: "CREATE_HANDOFF", label: "Handoff", key: "cmd-create-handoff" },
-    { id: "END_SESSION", label: "End", key: "cmd-end-session" }
+    { id: "PROMOTE", label: "Promote", key: "cmd-promote" },
+    { id: "SUPERSEDE", label: "Supersede", key: "cmd-supersede" },
+    { id: "END_SESSION", label: "End Session", key: "cmd-end-session" },
+    { id: "RELEASE_HOLD", label: "Release Hold", key: "cmd-release-hold" },
+    { id: "RESUME_PARKED", label: "Resume Parked", key: "cmd-resume-parked" }
   ];
+
+  const CONTROLS = [...VERNACULAR_CONTROLS, ...SESSION_TOOLS];
 
   // Frozen spec §6 RETURN_STATE defaults.
   const RETURN_STATE_DEFAULTS = {
-    RELOAD_BOOTSTRAP: false,
+    CAPISCE: true,
+    HOLD: true,
+    RELEASE_HOLD: true,
+    BRANCH: true,
     RECENTER_SESSION: true,
+    PARK: true,
+    RESUME_PARKED: true,
+    RELOAD_BOOTSTRAP: false,
     REASSERT_FRAME: false,
     SHOW_STATE: true,
     ANCHOR_COMMIT: true,
     CREATE_HANDOFF: true,
+    PROMOTE: true,
+    SUPERSEDE: true,
     END_SESSION: true
   };
 
@@ -54,25 +77,57 @@ const GCEProtocol = (() => {
   ]);
 
   // Frozen spec §9 — the ONLY displayable state fields, in display order.
+  // Full state snapshot from §3 + legacy field names for backward compatibility
   const STATE_FIELDS = [
     "AUTHORITY",
+    "PRIMARY_SEAT",
     "SEAT",
     "MODE",
+    "SESSION_ID",
+    "SESSION_STATUS",
+    "STATUS",
     "DON_INTENT",
     "OBJECTIVE",
     "CURRENT_TASK",
-    "MATURITY",
-    "STATUS",
-    "CONFIDENCE",
-    "BLOCKERS",
+    "PROJECT",
+    "WORKSTREAM",
+    "CURRENT_BRANCH",
+    "ORIGINATING_ANCHOR",
+    "CURRENT_ANCHOR",
     "LAST_ANCHOR",
-    "NEXT_ACTION"
+    "PROMOTED_CURRENT",
+    "PARKED",
+    "PARKED_ITEMS",
+    "CHECKPOINT",
+    "NEXT_ROUTE",
+    "BLOCKER_ROUTE",
+    "BLOCKERS",
+    "HANDOFF_STATE",
+    "NEXT_ACTION",
+    "CONFIDENCE",
+    "MATURITY",
+    "STATE_FRESHNESS",
+    "STATE_AS_OF"
   ];
 
   // Compact header field per spec §9 desired presentation.
-  const STATE_HEADER_FIELDS = ["SEAT", "STATUS", "LAST_ANCHOR"];
+  const STATE_HEADER_FIELDS = ["PRIMARY_SEAT", "MODE", "STATE_FRESHNESS", "CURRENT_BRANCH"];
+
+  // Freshness states per §3
+  const FRESHNESS_STATES = new Set(["CURRENT", "STALE", "UNKNOWN"]);
 
   const CONTROL_IDS = new Set(CONTROLS.map((c) => c.id));
+
+  const PAYLOAD_ALLOWLIST = new Set(["BRANCH", "PARK", "RESUME_PARKED", "PROMOTE", "SUPERSEDE", "ANCHOR_COMMIT"]);
+  const MAX_PAYLOAD_SIZE = 8192;
+  const PAYLOAD_SCHEMAS = {
+    BRANCH: { required: ["branchName"], optional: ["origin"] },
+    PARK: { optional: ["currentReference", "parkReason"] },
+    RESUME_PARKED: { required: ["parkedIdentity"], optional: [] },
+    PROMOTE: { required: ["target"], optional: ["replacesCurrent"] },
+    SUPERSEDE: { required: ["supersedeTarget"], optional: ["provenance"] },
+    ANCHOR_COMMIT: { optional: ["checkpointLabel", "description"] }
+  };
 
   function controlById(id) {
     return CONTROLS.find((c) => c.id === id) || null;
@@ -106,11 +161,38 @@ const GCEProtocol = (() => {
     return { epochMs: Number(m[1]), sequence: Number(m[2]), raw: nonce.trim() };
   }
 
+  function validatePayload(commandId, payload) {
+    if (!payload || typeof payload !== "object") return { valid: false, reason: "PAYLOAD_MUST_BE_OBJECT" };
+    if (!PAYLOAD_ALLOWLIST.has(commandId)) {
+      if (Object.keys(payload).length > 0) {
+        return { valid: false, reason: "PAYLOAD_NOT_ALLOWED_FOR_" + commandId };
+      }
+      return { valid: true };
+    }
+    const schema = PAYLOAD_SCHEMAS[commandId];
+    const payloadStr = JSON.stringify(payload);
+    if (payloadStr.length > MAX_PAYLOAD_SIZE) {
+      return { valid: false, reason: "PAYLOAD_SIZE_EXCEEDED" };
+    }
+    for (const req of schema.required) {
+      if (!(req in payload)) {
+        return { valid: false, reason: "PAYLOAD_MISSING_REQUIRED_" + req };
+      }
+    }
+    const allowed = new Set([...schema.required, ...schema.optional]);
+    for (const key of Object.keys(payload)) {
+      if (!allowed.has(key)) {
+        return { valid: false, reason: "PAYLOAD_UNEXPECTED_KEY_" + key };
+      }
+    }
+    return { valid: true };
+  }
+
   /*
    * Build the complete command envelope.
    * The envelope is the ENTIRE user message (spec §5). No prose, no wrapper.
    */
-  function buildCommandEnvelope({ commandId, seat, nonce, frame, returnState }) {
+  function buildCommandEnvelope({ commandId, seat, nonce, frame, returnState, payload }) {
     const cmd = String(commandId || "").trim();
     const st = String(seat || "").trim().toUpperCase();
     const nn = String(nonce || "").trim();
@@ -130,15 +212,28 @@ const GCEProtocol = (() => {
       throw new Error("INVALID FRAME: " + frame);
     }
 
-    return (
+    let envelope =
       "[" + CMD_VERSION + "]\n" +
       "CMD: " + cmd + "\n" +
       "SEAT: " + st + "\n" +
       "NONCE: " + nn + "\n" +
       "FRAME: " + fr + "\n" +
-      "RETURN_STATE: " + rs + "\n" +
-      CMD_CLOSE
-    );
+      "RETURN_STATE: " + rs + "\n";
+
+    if (payload && typeof payload === "object") {
+      const validation = validatePayload(cmd, payload);
+      if (!validation.valid) {
+        throw new Error(validation.reason);
+      }
+      try {
+        envelope += "PAYLOAD: " + JSON.stringify(payload) + "\n";
+      } catch (e) {
+        throw new Error("PAYLOAD_SERIALIZATION_FAILED");
+      }
+    }
+
+    envelope += CMD_CLOSE;
+    return envelope;
   }
 
   /*
@@ -152,22 +247,27 @@ const GCEProtocol = (() => {
     const lines = text.split(/\r?\n/);
     const blocks = [];
     let current = null;
+    let foundOpen = false;
 
     for (const rawLine of lines) {
       const line = rawLine.trim();
       if (current === null) {
-        if (line === ACK_OPEN) current = [];
+        if (line === ACK_OPEN) {
+          current = [];
+          foundOpen = true;
+        }
         continue;
       }
       if (line === ACK_CLOSE) {
         blocks.push(current.join("\n"));
         current = null;
+        foundOpen = false;
         continue;
       }
       current.push(rawLine);
     }
-    // Unterminated block is discarded. No partial ACK is ever accepted.
-    return blocks;
+    const truncated = foundOpen && current !== null ? current.join("\n") : null;
+    return { blocks, truncated };
   }
 
   function parseFieldLine(line) {
@@ -262,12 +362,15 @@ const GCEProtocol = (() => {
   function parseAllAcks(text) {
     const acks = [];
     const rejected = [];
-    for (const block of extractAckBlocks(text)) {
+    const raw = extractAckBlocks(text);
+    const truncated = raw.truncated;
+    const blocks = raw.blocks || raw;
+    for (const block of blocks) {
       const parsed = parseAckBlock(block);
       if (parsed.ok) acks.push(parsed.ack);
       else rejected.push({ reason: parsed.reason, block });
     }
-    return { acks, rejected };
+    return { acks, rejected, truncated };
   }
 
   return {
@@ -278,11 +381,14 @@ const GCEProtocol = (() => {
     ACK_CLOSE,
     FRAME_CURRENT,
     CONTROLS,
+    VERNACULAR_CONTROLS,
+    SESSION_TOOLS,
     CONTROL_IDS,
     RETURN_STATE_DEFAULTS,
     VALID_RESULTS,
     STATE_FIELDS,
     STATE_HEADER_FIELDS,
+    FRESHNESS_STATES,
     controlById,
     controlByCommandName,
     isKnownControl,
@@ -298,4 +404,14 @@ const GCEProtocol = (() => {
 
 if (typeof module !== "undefined" && module.exports) {
   module.exports = GCEProtocol;
+}
+
+/*
+ * Browser global. The panel (sidebar/panel.html) is a separate document from the
+ * background page and loads this file itself via <script src="../lib/protocol.js">.
+ * A top-level `const` alone is a script-scoped lexical binding and is NOT visible as
+ * a property, so the panel could never read it. Publish it explicitly.
+ */
+if (typeof globalThis !== "undefined") {
+  globalThis.GCEProtocolModule = GCEProtocol;
 }

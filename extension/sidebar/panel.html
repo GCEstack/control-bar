@@ -6,30 +6,141 @@
   <link rel="stylesheet" href="panel.css" />
 </head>
 <body>
-  <header id="hdr">
-    <span id="hdr-seat">CODA</span>
-    <span id="hdr-state">IDLE</span>
-  </header>
+  <div id="app">
+    <!-- L0: Trust Strip (always visible) -->
+    <header id="trust-strip" class="trust-strip">
+      <div class="ts-seat">
+        <span class="ts-label">SEAT</span>
+        <span id="ts-seat-val" class="ts-value">—</span>
+      </div>
+      <div class="ts-mode">
+        <span class="ts-label">MODE</span>
+        <span id="ts-mode-val" class="ts-value">—</span>
+      </div>
+      <div class="ts-freshness">
+        <span class="ts-label">STATE</span>
+        <span id="ts-freshness-val" class="ts-value freshness-unknown">UNKNOWN</span>
+      </div>
+      <div class="ts-branch">
+        <span class="ts-label">BRANCH</span>
+        <span id="ts-branch-val" class="ts-value">—</span>
+      </div>
+      <div id="ts-blocker" class="ts-blocker hidden">
+        <span class="ts-label">BLOCKER</span>
+        <span id="ts-blocker-val" class="ts-value blocker-count">0</span>
+      </div>
+      <div id="ts-parked" class="ts-parked hidden">
+        <span class="ts-label">PARKED</span>
+        <span id="ts-parked-val" class="ts-value parked-count">0</span>
+      </div>
+    </header>
 
-  <section id="status" aria-live="polite">
-    <div id="status-line" class="muted">NO STATE RECEIVED</div>
-    <div id="stale" class="muted"></div>
-  </section>
+    <!-- Transport Health (separate from Framework state) -->
+    <div id="transport-health" class="transport-health">
+      <span class="th-icon">⟁</span>
+      <span id="th-status" class="th-status">IDLE</span>
+    </div>
 
-  <nav id="controls" aria-label="GCE controls"></nav>
+    <!-- L1: Don Vernacular Row -->
+    <nav id="vernacular-row" class="vernacular-row" aria-label="Don controls">
+    </nav>
 
-  <section id="lastcmd" class="muted"></section>
+    <!-- L2: Don Table (expandable) -->
+    <section id="don-table" class="don-table collapsed">
+      <button id="btn-expand" class="table-toggle" aria-expanded="false">
+        <span class="toggle-icon">▸</span>
+        <span class="toggle-label">View Details</span>
+      </button>
 
-  <footer id="ftr">
-    <button id="btn-log" type="button" class="mini" title="Append-only logs">LOG</button>
-    <button id="btn-resume" type="button" class="mini" title="Re-open session for new commands">NEW SESSION</button>
-  </footer>
+      <div id="table-content" class="table-content hidden">
+        <div class="table-section" data-section="where">
+          <h3 class="section-hdr">WHERE AM I</h3>
+          <dl class="section-dl" id="dl-where"></dl>
+        </div>
+        <div class="table-section" data-section="what">
+          <h3 class="section-hdr">WHAT IS HAPPENING</h3>
+          <dl class="section-dl" id="dl-what"></dl>
+        </div>
+        <div class="table-section" data-section="next">
+          <h3 class="section-hdr">WHAT CAN I DO NEXT</h3>
+          <dl class="section-dl" id="dl-next"></dl>
+        </div>
 
-  <dialog id="logdlg">
-    <div class="dlg-hd">APPEND-ONLY LOG <button id="btn-log-close" class="mini">CLOSE</button></div>
-    <pre id="logbody"></pre>
-  </dialog>
+        <!-- Session Tools Drawer -->
+        <div id="session-tools" class="session-tools">
+          <h3 class="section-hdr">SESSION TOOLS</h3>
+          <div id="tools-grid" class="tools-grid"></div>
+        </div>
+      </div>
+    </section>
 
+    <!-- Status / Feedback -->
+    <section id="status" aria-live="polite">
+      <div id="status-line" class="status-line">Ready</div>
+    </section>
+
+    <!-- Log Dialog -->
+    <dialog id="logdlg" class="log-dialog">
+      <div class="dlg-hd">
+        <span>APPEND-ONLY LOG</span>
+        <button id="btn-log-close" type="button" class="btn-mini">CLOSE</button>
+      </div>
+      <pre id="logbody" class="log-body"></pre>
+    </dialog>
+
+    <!-- Branch Popover -->
+    <dialog id="branch-dlg" class="popover-dialog">
+      <div class="popover-hd">
+        <span>CREATE BRANCH</span>
+        <button id="btn-branch-close" type="button" class="btn-mini">✕</button>
+      </div>
+      <div class="popover-body">
+        <label class="popover-label">
+          Branch Name (optional)
+          <input type="text" id="branch-name" class="popover-input" placeholder="e.g., explore-alternative" />
+        </label>
+        <div class="popover-origin">
+          Origin: <span id="branch-origin">—</span>
+        </div>
+      </div>
+      <div class="popover-ft">
+        <button id="btn-branch-cancel" type="button" class="btn-secondary">Cancel</button>
+        <button id="btn-branch-confirm" type="button" class="btn-primary">Create Branch</button>
+      </div>
+    </dialog>
+
+    <!-- Park Shelf -->
+    <dialog id="park-dlg" class="popover-dialog">
+      <div class="popover-hd">
+        <span>PARKED LINES</span>
+        <button id="btn-park-close" type="button" class="btn-mini">✕</button>
+      </div>
+      <div id="park-list" class="park-list"></div>
+    </dialog>
+
+    <!-- End Session Confirm -->
+    <dialog id="end-dlg" class="popover-dialog">
+      <div class="popover-hd">
+        <span>END SESSION</span>
+        <button id="btn-end-close" type="button" class="btn-mini">✕</button>
+      </div>
+      <div class="popover-body">
+        <div id="end-summary" class="end-summary"></div>
+      </div>
+      <div class="popover-ft">
+        <button id="btn-end-cancel" type="button" class="btn-secondary">Cancel</button>
+        <button id="btn-end-confirm" type="button" class="btn-danger">End Session</button>
+      </div>
+    </dialog>
+
+    <!-- Footer -->
+    <footer id="ftr" class="panel-footer">
+      <button id="btn-log" type="button" class="btn-mini" title="Append-only logs">LOG</button>
+      <button id="btn-park-shelf" type="button" class="btn-mini" title="View parked lines">PARKED</button>
+    </footer>
+  </div>
+
+  <script src="../lib/protocol.js"></script>
   <script src="panel.js"></script>
 </body>
 </html>

@@ -164,7 +164,7 @@ function createCore({ protocol, store, adapter, adapterFn, now, sentTimeoutMs = 
     };
   }
 
-  async function issue(commandId, seat) {
+  async function issue(commandId, seat, payload) {
     const seatToken = String(seat || "").trim().toUpperCase();
     if (!seatToken) {
       return { ok: false, topState: "NO_ACTIVE_SEAT", reason: "NO_SEAT" };
@@ -190,7 +190,8 @@ function createCore({ protocol, store, adapter, adapterFn, now, sentTimeoutMs = 
         seat: seatToken,
         nonce,
         frame: protocol.FRAME_CURRENT,
-        returnState
+        returnState,
+        payload
       });
     } catch (e) {
       return { ok: false, topState: "IDLE", reason: "ENVELOPE_BUILD_FAILED", error: String(e) };
@@ -255,7 +256,11 @@ function createCore({ protocol, store, adapter, adapterFn, now, sentTimeoutMs = 
    */
   async function ingestPageText(text) {
     const at = clock();
-    const { acks, rejected } = protocol.parseAllAcks(text);
+    const { acks, rejected, truncated } = protocol.parseAllAcks(text);
+
+    if (truncated) {
+      await store.appendRejectedAck({ reason: "ACK_TRUNCATED", at, block: truncated });
+    }
 
     for (const r of rejected) {
       await store.appendRejectedAck({ reason: r.reason, at, block: r.block });
@@ -413,7 +418,9 @@ if (typeof browser !== "undefined" && browser.runtime && browser.runtime.id &&
       }
       return detectAdapter().then((adapter) => {
         currentAdapter = adapter;
-        return core.issue(msg.commandId, msg.seat || DEFAULT_SEAT);
+        return core.issue(msg.commandId, msg.seat || DEFAULT_SEAT, msg.payload).then((result) => {
+          return { ...result, commandId: msg.commandId };
+        });
       });
     }
     if (msg.type === "GCE_GET_SNAPSHOT") {

@@ -98,11 +98,16 @@ async function main() {
   const reply = await msgListeners[0].fn({ type: "GCE_GET_SNAPSHOT" });
   if (!reply) return fail("GCE_GET_SNAPSHOT returned no snapshot.");
   if (!Array.isArray(reply.controls)) return fail("snapshot has no controls array: " + JSON.stringify(Object.keys(reply)));
-  if (reply.controls.length !== 7) return fail("expected 7 controls, got " + reply.controls.length);
 
-  const ids = reply.controls.map((c) => c.id).join(",");
-  const expected = "RELOAD_BOOTSTRAP,RECENTER_SESSION,REASSERT_FRAME,SHOW_STATE,ANCHOR_COMMIT,CREATE_HANDOFF,END_SESSION";
-  if (ids !== expected) return fail("control ids wrong: " + ids);
+  // Superset assertion: the seven v1 controls must all still be served by the
+  // background wiring (a regression would silently drop Don's baseline surface),
+  // and the accepted enhancement controls must be served alongside them.
+  const ids = reply.controls.map((c) => c.id);
+  const baseline = ["RELOAD_BOOTSTRAP", "RECENTER_SESSION", "REASSERT_FRAME", "SHOW_STATE", "ANCHOR_COMMIT", "CREATE_HANDOFF", "END_SESSION"];
+  const missingBaseline = baseline.filter(id => !ids.includes(id));
+  if (missingBaseline.length) return fail("baseline controls missing from wiring: " + missingBaseline.join(",") + " (served: " + ids.join(",") + ")");
+  const missingEnhancement = ["CAPISCE", "HOLD", "BRANCH", "PARK", "PROMOTE", "SUPERSEDE"].filter(id => !ids.includes(id));
+  if (missingEnhancement.length) return fail("enhancement controls missing from wiring: " + missingEnhancement.join(",") + " (served: " + ids.join(",") + ")");
 
   // --- 5. a command listener must be registered (keyboard shortcuts) -----
   if (listeners.filter((l) => l.kind === "onCommand").length === 0) {
@@ -110,7 +115,7 @@ async function main() {
   }
 
   console.log("[PASS] R10 — Browser wiring boots: all " + scripts.length + " background scripts evaluated in one shared global scope");
-  console.log("       onMessage listener registered and answers GCE_GET_SNAPSHOT with 7 controls (" + ids + ")");
+  console.log("       onMessage listener registered and answers GCE_GET_SNAPSHOT with " + ids.length + " controls (" + ids.join(",") + ")");
   console.log("       onCommand listener registered (keyboard shortcuts live)");
   console.log("       __gceCore present -> wiring gate resolved the globals correctly");
   // The wiring block installs a 700ms setInterval, which keeps Node's event
