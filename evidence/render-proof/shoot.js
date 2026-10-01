@@ -140,6 +140,8 @@ const MEASURE = `
     blockerIsRed: blocker ? /255,\\s*69,\\s*58/.test(cs(blocker, "color")) : false,
     parkedVisible: vis(parked),
     parkedText: parked ? parked.textContent.trim() : null,
+    parkedCount: parked ? (parked.querySelector("span") || {}).textContent : null,
+    parkedFlagDrawn: !!(parked && parked.querySelector(".chip-flag")),
     // hero
     heroPresent: vis(hero),
     heroBorder: cs(hero, "borderTopColor"),
@@ -273,6 +275,11 @@ const MEASURE = `
     checks["no label truncation"] = m2.anyTruncate === false;
     // Five frozen verbs all present.
     checks["five verbs"] = Array.isArray(m2.vernacular) && m2.vernacular.length === 5;
+    // "Chips glance" — a parked chip must carry the count the seat actually sent.
+    if (m2.parkedVisible) {
+      checks["parked chip has count"] = m2.parkedCount !== null && String(m2.parkedCount).trim() !== "";
+      checks["parked flag drawn"] = m2.parkedFlagDrawn === true;
+    }
     if (m2.tableExpanded) {
       // Depth-on-demand: when the table is open the cards must be real boxes.
       checks["cards have borders"] = Array.isArray(m2.sections) &&
