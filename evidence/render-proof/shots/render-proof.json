@@ -1,7 +1,7 @@
 [
   {
     "name": "01-collapsed-default",
-    "ready": false,
+    "ready": true,
     "seat": null,
     "surface": "chatgpt",
     "measured": {
@@ -138,7 +138,7 @@
   },
   {
     "name": "02-expanded-prose-blockers",
-    "ready": false,
+    "ready": true,
     "seat": null,
     "surface": "chatgpt",
     "measured": {
@@ -275,7 +275,7 @@
   },
   {
     "name": "03-expanded-counted-blockers",
-    "ready": false,
+    "ready": true,
     "seat": null,
     "surface": "chatgpt",
     "measured": {
@@ -409,7 +409,7 @@
   },
   {
     "name": "04-expanded-calm-unknown",
-    "ready": false,
+    "ready": true,
     "seat": null,
     "surface": "chatgpt",
     "measured": {
@@ -543,7 +543,7 @@
   },
   {
     "name": "05-seat-coda",
-    "ready": false,
+    "ready": true,
     "seat": "CODA",
     "surface": "chatgpt",
     "measured": {
@@ -677,7 +677,7 @@
   },
   {
     "name": "06-seat-enzo",
-    "ready": false,
+    "ready": true,
     "seat": "ENZO",
     "surface": "chatgpt",
     "measured": {
@@ -811,7 +811,7 @@
   },
   {
     "name": "07-seat-serafina",
-    "ready": false,
+    "ready": true,
     "seat": "SERAFINA",
     "surface": "chatgpt",
     "measured": {
@@ -948,7 +948,7 @@
   },
   {
     "name": "08-seat-nico",
-    "ready": false,
+    "ready": true,
     "seat": "NICO",
     "surface": "chatgpt",
     "measured": {
@@ -1082,7 +1082,7 @@
   },
   {
     "name": "09-surface-kimi",
-    "ready": false,
+    "ready": true,
     "seat": "SERAFINA",
     "surface": "kimi",
     "measured": {
@@ -1216,7 +1216,7 @@
   },
   {
     "name": "10-surface-kimi-calm",
-    "ready": false,
+    "ready": true,
     "seat": "LUCE",
     "surface": "kimi",
     "measured": {

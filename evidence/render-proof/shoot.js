@@ -240,8 +240,13 @@ const hero = q(".table-section.hero");
       for (let i = 0; i < 60; i++) {
         await sleep(250);
         try {
-          const t = await m.send("WebDriver:GetCurrentURL", {});
-          const ttl = await m.send("WebDriver:ExecuteScript", { script: "return document.title;", args: [] });
+          let ttl = await m.send("WebDriver:ExecuteScript", { script: "return document.title;", args: [] });
+          // Marionette wraps a script return in { value: ... }. Unwrap before
+          // the string test — without this, String(ttl) is "[object Object]",
+          // the READY check never matches, and every case is recorded NOT READY
+          // even when the harness rendered correctly. The measured payload is
+          // unwrapped below for the same reason.
+          if (ttl && typeof ttl === "object" && "value" in ttl) ttl = ttl.value;
           if (String(ttl).includes("READY:")) { ready = true; break; }
         } catch (_) {}
       }
