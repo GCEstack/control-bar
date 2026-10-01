@@ -1,0 +1,468 @@
+[
+  {
+    "name": "01-collapsed-default",
+    "ready": false,
+    "measured": {
+      "title": "READY:prose",
+      "blockerVisible": true,
+      "blockerText": "",
+      "blockerCount": null,
+      "blockerFlagDrawn": true,
+      "blockerFlagBox": {
+        "w": 8,
+        "h": 10
+      },
+      "blockerColor": "rgb(255, 159, 10)",
+      "blockerIsRed": false,
+      "parkedVisible": true,
+      "parkedText": "2",
+      "heroPresent": false,
+      "heroBorder": "rgba(74, 158, 255, 0.42)",
+      "heroValueFontSize": "14px",
+      "heroValueWeight": "700",
+      "sections": [
+        {
+          "name": "Current Work",
+          "bg": "rgba(0, 0, 0, 0)",
+          "border": "1px",
+          "hasBox": false
+        },
+        {
+          "name": "State & Provenance",
+          "bg": "rgb(45, 45, 50)",
+          "border": "1px",
+          "hasBox": false
+        },
+        {
+          "name": "Exceptions",
+          "bg": "rgb(45, 45, 50)",
+          "border": "1px",
+          "hasBox": false
+        },
+        {
+          "name": "Park Shelf ⏸ 2",
+          "bg": "rgb(45, 45, 50)",
+          "border": "1px",
+          "hasBox": false
+        }
+      ],
+      "parkShelfVisible": false,
+      "parkTiles": [
+        "voicebridge corpusfrom ▸ 09-28  ·  STALEResume",
+        "v1.3.2 sign-offfrom ▸ 09-30  ·  CURRENTResume"
+      ],
+      "nextActionVisible": false,
+      "nextActionText": "Return recovery report for ruling",
+      "nextActionButtons": [
+        "Anchor",
+        "Checkpoint",
+        "Promote",
+        "Supersede",
+        "End Session"
+      ],
+      "toolsDrawerOpen": false,
+      "toolsButtons": [
+        "Bootstrap",
+        "Frame",
+        "State",
+        "Checkpoint",
+        "Handoff",
+        "Promote",
+        "Supersede",
+        "End Session",
+        "Release Hold",
+        "Resume Parked"
+      ],
+      "vernacular": [
+        {
+          "label": "CAPISCE",
+          "h": 28,
+          "w": 59,
+          "wrapped": false,
+          "truncated": false
+        },
+        {
+          "label": "HOLD",
+          "h": 28,
+          "w": 44,
+          "wrapped": false,
+          "truncated": false
+        },
+        {
+          "label": "BRANCH",
+          "h": 28,
+          "w": 58,
+          "wrapped": false,
+          "truncated": false
+        },
+        {
+          "label": "RE-CENTER",
+          "h": 28,
+          "w": 73,
+          "wrapped": false,
+          "truncated": false
+        },
+        {
+          "label": "PARK",
+          "h": 28,
+          "w": 43,
+          "wrapped": false,
+          "truncated": false
+        }
+      ],
+      "anyWrap": false,
+      "anyTruncate": false,
+      "tableExpanded": false,
+      "contentHidden": true,
+      "panelHeight": 400
+    }
+  },
+  {
+    "name": "02-expanded-prose-blockers",
+    "ready": false,
+    "measured": {
+      "title": "READY:prose",
+      "blockerVisible": true,
+      "blockerText": "",
+      "blockerCount": null,
+      "blockerFlagDrawn": true,
+      "blockerFlagBox": {
+        "w": 8,
+        "h": 10
+      },
+      "blockerColor": "rgb(255, 159, 10)",
+      "blockerIsRed": false,
+      "parkedVisible": true,
+      "parkedText": "2",
+      "heroPresent": true,
+      "heroBorder": "rgba(74, 158, 255, 0.42)",
+      "heroValueFontSize": "14px",
+      "heroValueWeight": "700",
+      "sections": [
+        {
+          "name": "Current Work",
+          "bg": "rgba(0, 0, 0, 0)",
+          "border": "1px",
+          "hasBox": true
+        },
+        {
+          "name": "State & Provenance",
+          "bg": "rgb(45, 45, 50)",
+          "border": "1px",
+          "hasBox": true
+        },
+        {
+          "name": "Exceptions",
+          "bg": "rgb(45, 45, 50)",
+          "border": "1px",
+          "hasBox": true
+        },
+        {
+          "name": "Park Shelf ⏸ 2",
+          "bg": "rgb(45, 45, 50)",
+          "border": "1px",
+          "hasBox": true
+        }
+      ],
+      "parkShelfVisible": true,
+      "parkTiles": [
+        "voicebridge corpusfrom ▸ 09-28  ·  STALEResume",
+        "v1.3.2 sign-offfrom ▸ 09-30  ·  CURRENTResume"
+      ],
+      "nextActionVisible": true,
+      "nextActionText": "Return recovery report for ruling",
+      "nextActionButtons": [
+        "Anchor",
+        "Checkpoint",
+        "Promote",
+        "Supersede",
+        "End Session"
+      ],
+      "toolsDrawerOpen": false,
+      "toolsButtons": [
+        "Bootstrap",
+        "Frame",
+        "State",
+        "Checkpoint",
+        "Handoff",
+        "Promote",
+        "Supersede",
+        "End Session",
+        "Release Hold",
+        "Resume Parked"
+      ],
+      "vernacular": [
+        {
+          "label": "CAPISCE",
+          "h": 28,
+          "w": 59,
+          "wrapped": false,
+          "truncated": false
+        },
+        {
+          "label": "HOLD",
+          "h": 28,
+          "w": 44,
+          "wrapped": false,
+          "truncated": false
+        },
+        {
+          "label": "BRANCH",
+          "h": 28,
+          "w": 58,
+          "wrapped": false,
+          "truncated": false
+        },
+        {
+          "label": "RE-CENTER",
+          "h": 28,
+          "w": 73,
+          "wrapped": false,
+          "truncated": false
+        },
+        {
+          "label": "PARK",
+          "h": 28,
+          "w": 43,
+          "wrapped": false,
+          "truncated": false
+        }
+      ],
+      "anyWrap": false,
+      "anyTruncate": false,
+      "tableExpanded": true,
+      "contentHidden": false,
+      "panelHeight": 667
+    }
+  },
+  {
+    "name": "03-expanded-counted-blockers",
+    "ready": false,
+    "measured": {
+      "title": "READY:counted",
+      "blockerVisible": true,
+      "blockerText": "2",
+      "blockerCount": "2",
+      "blockerFlagDrawn": true,
+      "blockerFlagBox": {
+        "w": 8,
+        "h": 10
+      },
+      "blockerColor": "rgb(255, 159, 10)",
+      "blockerIsRed": false,
+      "parkedVisible": false,
+      "parkedText": "",
+      "heroPresent": true,
+      "heroBorder": "rgba(74, 158, 255, 0.42)",
+      "heroValueFontSize": "14px",
+      "heroValueWeight": "700",
+      "sections": [
+        {
+          "name": "Current Work",
+          "bg": "rgba(0, 0, 0, 0)",
+          "border": "1px",
+          "hasBox": true
+        },
+        {
+          "name": "State & Provenance",
+          "bg": "rgb(45, 45, 50)",
+          "border": "1px",
+          "hasBox": true
+        },
+        {
+          "name": "Exceptions",
+          "bg": "rgb(45, 45, 50)",
+          "border": "1px",
+          "hasBox": true
+        },
+        {
+          "name": "Park Shelf",
+          "bg": "rgb(45, 45, 50)",
+          "border": "1px",
+          "hasBox": false
+        }
+      ],
+      "parkShelfVisible": false,
+      "parkTiles": [],
+      "nextActionVisible": true,
+      "nextActionText": "Return to Luce for verification",
+      "nextActionButtons": [
+        "Anchor",
+        "Checkpoint",
+        "Promote",
+        "Supersede",
+        "End Session"
+      ],
+      "toolsDrawerOpen": false,
+      "toolsButtons": [
+        "Bootstrap",
+        "Frame",
+        "State",
+        "Checkpoint",
+        "Handoff",
+        "Promote",
+        "Supersede",
+        "End Session",
+        "Release Hold",
+        "Resume Parked"
+      ],
+      "vernacular": [
+        {
+          "label": "CAPISCE",
+          "h": 28,
+          "w": 59,
+          "wrapped": false,
+          "truncated": false
+        },
+        {
+          "label": "HOLD",
+          "h": 28,
+          "w": 44,
+          "wrapped": false,
+          "truncated": false
+        },
+        {
+          "label": "BRANCH",
+          "h": 28,
+          "w": 58,
+          "wrapped": false,
+          "truncated": false
+        },
+        {
+          "label": "RE-CENTER",
+          "h": 28,
+          "w": 73,
+          "wrapped": false,
+          "truncated": false
+        },
+        {
+          "label": "PARK",
+          "h": 28,
+          "w": 43,
+          "wrapped": false,
+          "truncated": false
+        }
+      ],
+      "anyWrap": false,
+      "anyTruncate": false,
+      "tableExpanded": true,
+      "contentHidden": false,
+      "panelHeight": 667
+    }
+  },
+  {
+    "name": "04-expanded-calm-unknown",
+    "ready": false,
+    "measured": {
+      "title": "READY:calm",
+      "blockerVisible": false,
+      "blockerText": "",
+      "blockerCount": null,
+      "blockerFlagDrawn": true,
+      "blockerFlagBox": {
+        "w": 0,
+        "h": 0
+      },
+      "blockerColor": "rgb(255, 159, 10)",
+      "blockerIsRed": false,
+      "parkedVisible": false,
+      "parkedText": "",
+      "heroPresent": true,
+      "heroBorder": "rgba(74, 158, 255, 0.42)",
+      "heroValueFontSize": "14px",
+      "heroValueWeight": "700",
+      "sections": [
+        {
+          "name": "Current Work",
+          "bg": "rgba(0, 0, 0, 0)",
+          "border": "1px",
+          "hasBox": true
+        },
+        {
+          "name": "State & Provenance",
+          "bg": "rgb(45, 45, 50)",
+          "border": "1px",
+          "hasBox": true
+        },
+        {
+          "name": "Exceptions",
+          "bg": "rgb(45, 45, 50)",
+          "border": "1px",
+          "hasBox": true
+        },
+        {
+          "name": "Park Shelf",
+          "bg": "rgb(45, 45, 50)",
+          "border": "1px",
+          "hasBox": false
+        }
+      ],
+      "parkShelfVisible": false,
+      "parkTiles": [],
+      "nextActionVisible": true,
+      "nextActionText": "—",
+      "nextActionButtons": [
+        "Anchor",
+        "Checkpoint",
+        "Promote",
+        "Supersede",
+        "End Session"
+      ],
+      "toolsDrawerOpen": false,
+      "toolsButtons": [
+        "Bootstrap",
+        "Frame",
+        "State",
+        "Checkpoint",
+        "Handoff",
+        "Promote",
+        "Supersede",
+        "End Session",
+        "Release Hold",
+        "Resume Parked"
+      ],
+      "vernacular": [
+        {
+          "label": "CAPISCE",
+          "h": 28,
+          "w": 59,
+          "wrapped": false,
+          "truncated": false
+        },
+        {
+          "label": "HOLD",
+          "h": 28,
+          "w": 44,
+          "wrapped": false,
+          "truncated": false
+        },
+        {
+          "label": "BRANCH",
+          "h": 28,
+          "w": 58,
+          "wrapped": false,
+          "truncated": false
+        },
+        {
+          "label": "RE-CENTER",
+          "h": 28,
+          "w": 73,
+          "wrapped": false,
+          "truncated": false
+        },
+        {
+          "label": "PARK",
+          "h": 28,
+          "w": 43,
+          "wrapped": false,
+          "truncated": false
+        }
+      ],
+      "anyWrap": false,
+      "anyTruncate": false,
+      "tableExpanded": true,
+      "contentHidden": false,
+      "panelHeight": 661
+    }
+  }
+]

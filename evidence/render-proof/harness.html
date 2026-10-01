@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>Control Bar — render proof harness</title>
+  <!-- The REAL panel stylesheet. No copy, no override. -->
+  <link rel="stylesheet" href="/extension/sidebar/panel.css" />
+</head>
+<body>
+  <!-- The REAL panel markup, injected below by the harness so there is one source. -->
+  <div id="app-mount"></div>
+
+  <script>
+  /*
+   * Render proof harness.
+   *
+   * Why this exists: the D-15 blocker-colour breach sat in committed CSS since
+   * v1.3.2 and passed every unit test in this repo. Visual defects are invisible
+   * to the harness suite, so the visual claim has to be proven by rendering the
+   * real panel with the real stylesheet and looking at the pixels.
+   *
+   * It stubs only the browser extension messaging surface, which the panel uses to
+   * RECEIVE snapshots. It does not touch the render path: panel.js's own
+   * normalizeSnapshot / renderTrustStrip / renderDonTable / renderParkShelf run
+   * unmodified against a snapshot shaped exactly like the background's broadcast.
+   */
+  (async () => {
+  const CASE = new URLSearchParams(location.search).get("case") || "populated";
+  const EXPAND = new URLSearchParams(location.search).get("expand") === "1";
+
+  // Minimal WebExtension stub. panel.js reads browser.runtime.onMessage.addListener
+  // and browser.runtime.sendMessage. Capturing the listener lets us deliver the
+  // snapshot the same way the background page would.
+  window.__msgListener = null;
+  window.browser = {
+    runtime: {
+      id: "gce-don-control-bar@don.local",
+      onMessage: {
+        addListener(fn) { window.__msgListener = fn; }
+      },
+      sendMessage() { return Promise.resolve({ ok: true, nonce: "GCE-1759000000000-1" }); }
+    }
+  };
+
+  const REAL_HTML = await (await fetch("/extension/sidebar/panel.html")).text();
+  const doc = new DOMParser().parseFromString(REAL_HTML, "text/html");
+  document.getElementById("app-mount").appendChild(
+    document.importNode(doc.getElementById("app"), true)
+  );
+
+  // The real protocol module, exactly as the shipped panel loads it.
+  const s = document.createElement("script");
+  s.src = "/extension/lib/protocol.js";
+  document.head.appendChild(s);
+
+  await new Promise(r => s.onload = r);
+
+  const panel = document.createElement("script");
+  panel.src = "/extension/sidebar/panel.js";
+  document.body.appendChild(panel);
+  await new Promise(r => panel.onload = r);
+
+  // A snapshot shaped exactly like main.js getSnapshot() broadcasts:
+  // the panel's normalizeSnapshot unwraps lastState.state from it.
+  function snap(state, topState) {
+    return {
+      topState: topState || "IDLE",
+      session: { closed: false },
+      controls: [],
+      lastState: { nonce: "GCE-1759000000000-1", receivedAt: Date.now(), state: state },
+      stateAgeMs: 120,
+      latest: null,
+      outstandingCount: 0
+    };
+  }
+
+  const CASES = {
+    // Worst case for the exception-chip ruling: prose BLOCKERS, not a count.
+    prose: {
+      PRIMARY_SEAT: "SERAFINA", MODE: "DESIGN", STATE_FRESHNESS: "CURRENT",
+      CURRENT_BRANCH: "control-bar merge",
+      SESSION_ID: "4727", SESSION_STATUS: "ACTIVE",
+      PROJECT: "GCE_Framework", WORKSTREAM: "Control Bar",
+      OBJECTIVE: "Merge recovered UX onto v1.4.0 spine",
+      CURRENT_TASK: "UX recovery report for Don/Coda ruling",
+      DON_INTENT: "One operator surface, glance-first",
+      ORIGINATING_ANCHOR: "0930-anchor", CURRENT_ANCHOR: "rec-1",
+      PROMOTED_CURRENT: "ux-recovery", CONFIDENCE: "88",
+      CHECKPOINT: "0", STATE_AS_OF: "2026-09-30T23:41Z",
+      NEXT_ACTION: "Return recovery report for ruling",
+      NEXT_ROUTE: "SERAFINA -> DON/CODA",
+      BLOCKER_ROUTE: null, HANDOFF_STATE: "none",
+      // PROSE blockers: the chip must show a bare flag and NOT a parsed number.
+      BLOCKERS: "D-15 visual language awaiting Don approval - owner Serafina - clear: approve recovery mock",
+      PARKED: "2",
+      PARKED_ITEMS: [
+        { label: "voicebridge corpus", origin: "09-28", freshness: "stale", identity: "vb-corpus" },
+        { label: "v1.3.2 sign-off", origin: "09-30", freshness: "current", identity: "v132-signoff" }
+      ]
+    },
+    // Numeric blockers: the chip MAY show the count, because the seat sent one.
+    counted: {
+      PRIMARY_SEAT: "NICO", MODE: "IMPLEMENTATION", STATE_FRESHNESS: "STALE",
+      CURRENT_BRANCH: "ux/visual-layer-recovery",
+      SESSION_ID: "20260930-NICO-1", SESSION_STATUS: "ACTIVE",
+      PROJECT: "GCE_Framework", WORKSTREAM: "Control Bar",
+      OBJECTIVE: "Prove the recovered Control Bar renders the ratified hierarchy",
+      CURRENT_TASK: "Render proof", DON_INTENT: "Working product plus verified delta",
+      CURRENT_ANCHOR: "962f283", PROMOTED_CURRENT: "ux-recovery",
+      CONFIDENCE: "92", CHECKPOINT: "1", STATE_AS_OF: "2026-09-30T23:41Z",
+      NEXT_ACTION: "Return to Luce for verification", NEXT_ROUTE: "LUCE",
+      BLOCKER_ROUTE: null, HANDOFF_STATE: "none",
+      BLOCKERS: "2",            // a real count -> chip shows "⚑ 2"
+      PARKED: "0", PARKED_ITEMS: []
+    },
+    // Nothing wrong: everything must render honestly calm, no error styling.
+    calm: {
+      PRIMARY_SEAT: "LUCE", MODE: "VERIFICATION", STATE_FRESHNESS: "UNKNOWN",
+      SESSION_STATUS: null, PROJECT: null, WORKSTREAM: null,
+      OBJECTIVE: null, CURRENT_TASK: null, DON_INTENT: null,
+      NEXT_ACTION: null, NEXT_ROUTE: null, BLOCKERS: null, PARKED: "0",
+      PARKED_ITEMS: []
+    }
+  };
+
+  const state = CASES[CASE] || CASES.prose;
+  // Parked count for the prose case is a real number; the shelf also has 2 tiles.
+  const snapshot = snap(state, "IDLE");
+
+  function deliver() {
+    if (!window.__msgListener) return false;
+    window.__msgListener({ type: "GCE_SNAPSHOT", snapshot });
+    return true;
+  }
+
+  // Wait for panel.js init, then deliver.
+  let tries = 0;
+  const iv = setInterval(() => {
+    if (deliver() || ++tries > 100) {
+      clearInterval(iv);
+      if (EXPAND) {
+        const btn = document.getElementById("btn-expand");
+        if (btn && document.getElementById("table-content").classList.contains("hidden")) btn.click();
+      }
+      document.title = "READY:" + CASE;
+      document.documentElement.setAttribute("data-render-ready", "1");
+    }
+  }, 50);
+  })().catch((e) => {
+    document.title = "HARNESS-ERROR:" + e.message;
+    document.documentElement.setAttribute("data-render-error", e.message);
+  });
+  </script>
+</body>
+</html>

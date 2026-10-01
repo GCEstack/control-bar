@@ -40,12 +40,15 @@ body {
   display: none !important;
 }
 
-/* L0: Trust Strip */
+/* L0: Trust Strip — a single GLANCE line, not a field grid.
+ * Everything here must fit one scan: who, what mode, how fresh, what branch,
+ * and exception chips. Type detail belongs in the Don Table, not up here. */
 .trust-strip {
   display: flex;
   flex-wrap: wrap;
-  gap: 8px;
-  padding: 10px 12px;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 12px;
   background: var(--bg-secondary);
   border-bottom: 1px solid var(--border);
   font-size: 11px;
@@ -53,8 +56,10 @@ body {
 
 .trust-strip > div {
   display: flex;
-  flex-direction: column;
-  min-width: 50px;
+  align-items: baseline;
+  gap: 4px;
+  min-width: 0;
+  white-space: nowrap;
 }
 
 .ts-label {
@@ -66,23 +71,117 @@ body {
 
 .ts-value {
   color: var(--text-primary);
+  font-weight: 600;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Branch gets the remaining width and truncates — it is context, not a headline. */
+.ts-branch {
+  flex: 1 1 90px;
+  min-width: 60px;
+}
+
+.ts-branch .ts-value {
   font-weight: 500;
+  color: var(--text-secondary);
+  font-family: monospace;
+  font-size: 10px;
 }
 
 .freshness-current { color: var(--success); }
 .freshness-stale { color: var(--warning); }
 .freshness-unknown { color: var(--text-muted); }
 
-.ts-blocker .ts-value { color: var(--danger); }
-.ts-parked .ts-value { color: var(--accent); }
+/* D-15 EXCEPTION TREATMENT.
+ * A blocker is an EXCEPTION STATE, never an error state: amber flag, never red.
+ * The committed build wired --danger here since v1.3.2, which is a D-15 breach.
+ * Red is reserved for actual transmission failure (see .transport-tx_fail). */
+.ts-blocker .ts-value {
+  color: var(--warning);
+  font-weight: 700;
+  letter-spacing: 0.5px;
+}
 
-/* Transport Health */
+.ts-blocker .ts-label,
+.ts-parked .ts-label { display: none; }
+
+.ts-parked .ts-value { color: var(--accent); font-weight: 700; }
+
+/* Chips: small, self-describing, glanceable. Count renders only when the seat
+ * actually sent a count. Prose BLOCKERS gets a bare flag — never a parsed number,
+ * because inferring a count from prose would be fabrication. */
+/* The exception flag is DRAWN, not typed.
+ * U+2691 (⚑) is absent from many system font stacks and silently renders as a
+ * blank box — which would make the D-15 exception chip invisible exactly when it
+ * matters. A pole + pennant in CSS renders identically everywhere. */
+.chip-flag {
+  position: relative;
+  display: inline-block;
+  flex: 0 0 auto;
+  width: 8px;
+  height: 10px;
+}
+
+.chip-flag::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 1.5px;
+  height: 10px;
+  background: currentColor;
+}
+
+.chip-flag::after {
+  content: "";
+  position: absolute;
+  left: 1.5px;
+  top: 0.5px;
+  width: 6px;
+  height: 5px;
+  background: currentColor;
+  clip-path: polygon(0 0, 100% 0, 0 100%);
+}
+
+.chip-parked .chip-flag::after { clip-path: polygon(0 0, 100% 0, 100% 100%, 0 100%); }
+
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  min-width: 20px;
+  justify-content: center;
+  padding: 2px 7px;
+  border-radius: 10px;
+  font-size: 10px;
+  font-weight: 700;
+  line-height: 1.4;
+  white-space: nowrap;
+  border: 1px solid transparent;
+}
+
+.chip-blocker {
+  color: var(--warning);
+  background: rgba(255, 159, 10, 0.14);
+  border-color: rgba(255, 159, 10, 0.4);
+}
+
+.chip-parked {
+  color: var(--accent);
+  background: rgba(74, 158, 255, 0.14);
+  border-color: rgba(74, 158, 255, 0.4);
+}
+
+/* Transport Health — deliberately a SEPARATE visual language from framework
+ * state. Muted by default; it only takes colour when transport actually changes. */
 .transport-health {
   display: flex;
   align-items: center;
-  gap: 4px;
-  padding: 4px 12px;
-  font-size: 10px;
+  gap: 5px;
+  padding: 3px 12px;
+  font-size: 9.5px;
+  letter-spacing: 0.4px;
   color: var(--text-muted);
   background: var(--bg-primary);
   border-bottom: 1px solid var(--border);
@@ -98,27 +197,71 @@ body {
 .transport-tx_fail { color: var(--danger); }
 .transport-rejected { color: var(--warning); }
 
-/* L1: Vernacular Row */
+/* L1: Vernacular Row — the five frozen verbs. Equal, COMPACT weight.
+ * They serve the surface; they must not become the surface.
+ *
+ * D-15 wrap fix: `white-space: nowrap` on the BUTTON is the defect being fixed —
+ * RE-CENTER was breaking onto two lines INSIDE its own button. The ROW is still
+ * allowed to wrap if the panel is ever narrower than the five labels need, so a
+ * button can never end up truncating its own name to "RE-C...". */
 .vernacular-row {
   display: flex;
   flex-wrap: wrap;
-  gap: 6px;
-  padding: 12px;
+  align-items: stretch;
+  justify-content: center;
+  gap: 5px;
+  padding: 10px 12px;
   background: var(--bg-primary);
+  border-bottom: 1px solid var(--border);
 }
 
 .vn-btn {
-  flex: 1;
-  min-width: 50px;
-  padding: 10px 8px;
+  flex: 1 1 auto;
+  min-width: 0;
+  white-space: nowrap;
+  padding: 7px 4px;
   background: var(--bg-tertiary);
   border: 1px solid var(--border);
-  border-radius: 6px;
+  border-radius: 5px;
   color: var(--text-primary);
-  font-size: 12px;
+  font-size: 10px;
   font-weight: 600;
+  letter-spacing: 0;
   cursor: pointer;
   transition: all 0.15s ease;
+}
+
+.vn-btn .vn-label { display: block; }
+
+/* The TABLE toggle rides in the vernacular row, not the table — it is the
+ * control that governs depth on demand. */
+.vn-spacer { flex: 0 0 6px; }
+
+.vn-toggle {
+  flex: 0 0 auto;
+  align-self: stretch;
+  min-width: 54px;
+  white-space: nowrap;
+  padding: 7px 8px;
+  background: transparent;
+  border: 1px solid var(--border);
+  border-radius: 5px;
+  color: var(--text-secondary);
+  font-size: 11px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.vn-toggle:hover { color: var(--text-primary); border-color: var(--accent); }
+.vn-toggle[aria-expanded="true"] { color: var(--accent); border-color: var(--accent); }
+
+/* Toggle strip rides directly under the vernacular row, inside the same surface. */
+.vernacular-toggles {
+  display: flex;
+  align-items: stretch;
+  gap: 5px;
+  padding: 0 12px 10px;
+  background: var(--bg-primary);
 }
 
 .vn-btn:hover {
@@ -158,7 +301,7 @@ body {
 }
 
 .don-table.expanded {
-  max-height: 500px;
+  max-height: 420px;
   overflow-y: auto;
 }
 
@@ -188,54 +331,205 @@ body {
   padding: 0 12px 12px;
 }
 
+/* --- THE CARD. This is the recovery.
+ * The committed build gave .table-section a single `margin-bottom: 16px` and
+ * nothing else, which is why every render came out as one flat field dump. */
 .table-section {
-  margin-bottom: 16px;
+  margin-bottom: 10px;
+  padding: 10px 11px 11px;
+  background: var(--bg-tertiary);
+  border: 1px solid var(--border);
+  border-radius: 7px;
 }
 
 .section-hdr {
-  font-size: 10px;
-  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 9px;
+  font-weight: 700;
   color: var(--text-muted);
   text-transform: uppercase;
-  letter-spacing: 0.5px;
+  letter-spacing: 0.8px;
   margin-bottom: 8px;
-  padding-bottom: 4px;
-  border-bottom: 1px solid var(--border);
 }
+
+/* The accent bar is what makes a section read as a boundary rather than a heading. */
+.section-hdr::before {
+  content: "";
+  width: 3px;
+  height: 11px;
+  border-radius: 2px;
+  background: var(--accent);
+  flex: 0 0 3px;
+}
+
+/* CURRENT WORK is the dominant card. */
+.table-section.hero {
+  border-color: rgba(74, 158, 255, 0.42);
+  background: linear-gradient(180deg, rgba(74, 158, 255, 0.09), rgba(74, 158, 255, 0.02));
+}
+
+.table-section.hero .section-hdr { color: var(--accent); }
+
+/* EXCEPTIONS only appears when something is actually wrong. */
+.table-section.exceptions:empty { display: none; }
 
 .section-dl {
   display: grid;
   grid-template-columns: auto 1fr;
-  gap: 4px 12px;
+  gap: 5px 12px;
+  align-items: baseline;
 }
 
+/* Label is context; value is content. Weight the value. */
 .section-dl dt {
   color: var(--text-muted);
-  font-size: 11px;
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+  white-space: nowrap;
 }
 
 .section-dl dd {
   color: var(--text-primary);
-  font-size: 11px;
+  font-size: 11.5px;
+  font-weight: 500;
+  overflow-wrap: anywhere;
 }
 
-/* Session Tools */
-.session-tools {
-  margin-top: 16px;
-  padding-top: 12px;
-  border-top: 1px solid var(--border);
+/* Hero row — the heaviest type on the surface. */
+.section-dl dt.hero-label { color: var(--text-secondary); font-size: 10px; }
+.section-dl dd.hero-value {
+  font-size: 14px;
+  font-weight: 700;
+  line-height: 1.35;
+  color: #fff;
 }
+
+.section-dl dd.sub-value { font-size: 12px; font-weight: 600; }
+
+.section-dl dt.mono-label { font-family: monospace; text-transform: none; letter-spacing: 0; }
+.section-dl dd.mono-value { font-family: monospace; font-size: 10.5px; color: var(--text-secondary); }
+
+/* EXCEPTIONS rows carry the amber exception treatment. */
+.section-dl dd.exception-value { color: var(--warning); font-weight: 600; }
+
+/* Park Shelf — parked work is a shelf, not a line item. */
+.park-shelf { margin-bottom: 10px; }
+
+.park-tiles { display: flex; flex-direction: column; gap: 5px; }
+
+.park-tile {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 2px 8px;
+  align-items: center;
+  padding: 7px 9px;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border);
+  border-left: 3px solid var(--accent);
+  border-radius: 5px;
+}
+
+.park-tile-label {
+  grid-column: 1;
+  font-size: 11.5px;
+  font-weight: 600;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.park-tile-meta {
+  grid-column: 1;
+  font-size: 9.5px;
+  color: var(--text-muted);
+  font-family: monospace;
+}
+
+.park-tile .resume-btn {
+  grid-column: 2;
+  grid-row: 1 / span 2;
+  align-self: center;
+}
+
+/* NEXT ACTION — promoted out of the field grid into its own bar. */
+.next-action-bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  padding: 9px 11px;
+  margin-bottom: 10px;
+  background: var(--bg-tertiary);
+  border: 1px solid var(--border);
+  border-left: 3px solid var(--success);
+  border-radius: 7px;
+}
+
+.next-action-label {
+  font-size: 9px;
+  font-weight: 700;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+}
+
+.next-action-value {
+  flex: 1 1 100%;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-primary);
+  overflow-wrap: anywhere;
+}
+
+.next-action-actions {
+  flex: 1 1 100%;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+  margin-top: 2px;
+}
+
+.next-action-actions .tool-btn { padding: 5px 8px; font-size: 10px; }
+
+/* Session Tools — a collapsed drawer. Maintenance controls serve the surface;
+ * they never dominate it. */
+.session-tools {
+  margin-top: 4px;
+  border-top: 1px solid var(--border);
+  padding-top: 8px;
+}
+
+.session-tools .section-hdr {
+  cursor: pointer;
+  user-select: none;
+  margin-bottom: 0;
+}
+
+.session-tools .section-hdr::after {
+  content: "▸";
+  margin-left: auto;
+  color: var(--text-muted);
+  font-size: 9px;
+}
+
+.session-tools.open .section-hdr::after { content: "▾"; }
 
 .tools-grid {
-  display: grid;
+  display: none;
   grid-template-columns: repeat(3, 1fr);
-  gap: 6px;
+  gap: 5px;
   margin-top: 8px;
 }
 
+.session-tools.open .tools-grid { display: grid; }
+
+/* Secondary weight: quieter than the vernacular row by design. */
 .tool-btn {
-  padding: 8px 4px;
-  background: var(--bg-tertiary);
+  padding: 7px 4px;
+  background: var(--bg-secondary);
   border: 1px solid var(--border);
   border-radius: 4px;
   color: var(--text-secondary);

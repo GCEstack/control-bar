@@ -56,10 +56,16 @@
     el.donTable = document.getElementById("don-table");
     el.btnExpand = document.getElementById("btn-expand");
     el.tableContent = document.getElementById("table-content");
+    el.dlHero = document.getElementById("dl-hero");
     el.dlWhere = document.getElementById("dl-where");
-    el.dlWhat = document.getElementById("dl-what");
     el.dlNext = document.getElementById("dl-next");
+    el.parkShelf = document.getElementById("park-shelf");
+    el.parkShelfHdr = document.getElementById("park-shelf-hdr");
+    el.parkTiles = document.getElementById("park-tiles");
+    el.nextActionValue = document.getElementById("next-action-value");
+    el.nextActionActions = document.getElementById("next-action-actions");
     el.sessionTools = document.getElementById("session-tools");
+    el.toolsToggle = document.getElementById("tools-toggle");
     el.toolsGrid = document.getElementById("tools-grid");
     el.statusLine = document.getElementById("status-line");
     el.logDlg = document.getElementById("logdlg");
@@ -89,6 +95,45 @@
     return val.toUpperCase();
   }
 
+  /*
+   * EXCEPTION CHIP RULING (Serafina, final):
+   *   A count renders ONLY when the seat actually sent a count (number, or an
+   *   array whose length is known). Prose BLOCKERS gets a BARE flag only —
+   *   never a number inferred from prose, because guessing a count the seat
+   *   never sent would be fabrication.
+   *   Chips glance; rows explain.
+   */
+  function countFromField(raw) {
+    if (raw === null || raw === undefined) return null;
+    if (typeof raw === "number") return Number.isFinite(raw) ? raw : null;
+    if (Array.isArray(raw)) return raw.length;
+    const s = String(raw).trim();
+    if (s === "") return null;
+    // A bare integer (optionally signed) is a count the seat sent. Anything
+    // containing a digit *and* non-numeric characters is prose, not a count.
+    if (/^-?\d+$/.test(s)) return parseInt(s, 10);
+    return null;
+  }
+
+  /*
+   * Set an exception chip's content: a drawn flag plus a count ONLY when the seat
+   * actually sent one. The flag is a CSS element, not a typed glyph — U+2691 is
+   * missing from many system fonts and would render as an invisible blank box.
+   */
+  function setChip(el, count) {
+    el.innerHTML = "";
+    const flag = document.createElement("i");
+    flag.className = "chip-flag";
+    flag.setAttribute("aria-hidden", "true");
+    el.appendChild(flag);
+    if (count !== null) {
+      const n = document.createElement("span");
+      n.textContent = String(count);
+      el.appendChild(n);
+    }
+    el.setAttribute("aria-label", count === null ? "exception present" : "exception present: " + count);
+  }
+
   function renderTrustStrip(snapshot) {
     const s = snapshot || {};
     el.tsSeat.textContent = s.PRIMARY_SEAT || s.AUTHORITY || "—";
@@ -104,20 +149,24 @@
 
     el.tsBranch.textContent = s.CURRENT_BRANCH || s.CURRENT_ANCHOR || "—";
 
-    const blockers = s.BLOCKERS;
-    const blockerNum = parseInt(blockers, 10);
-    if (blockers && (blockerNum > 0 || typeof blockers === "string")) {
+    // Blockers -> amber exception chip. Bare flag when the seat sent prose.
+    const hasBlockers =
+      s.BLOCKERS !== null && s.BLOCKERS !== undefined &&
+      String(s.BLOCKERS).trim() !== "" &&
+      String(s.BLOCKERS).trim() !== "0";
+    if (hasBlockers) {
       el.tsBlocker.classList.remove("hidden");
-      el.tsBlockerVal.textContent = typeof blockers === "string" ? blockers : blockerNum;
+      setChip(el.tsBlockerVal, countFromField(s.BLOCKERS));
     } else {
       el.tsBlocker.classList.add("hidden");
     }
 
-    const parked = s.PARKED;
-    const parkedNum = parseInt(parked, 10);
-    if (parked && (parkedNum > 0 || typeof parked === "string")) {
+    // Parked -> chip count from PARKED, or from shelf tiles when present.
+    const parkedCount = countFromField(s.PARKED) ??
+      (Array.isArray(s.PARKED_ITEMS) ? s.PARKED_ITEMS.length : null);
+    if (parkedCount !== null && parkedCount > 0) {
       el.tsParked.classList.remove("hidden");
-      el.tsParkedVal.textContent = typeof parked === "string" ? parked : parkedNum;
+      setChip(el.tsParkedVal, parkedCount);
     } else {
       el.tsParked.classList.add("hidden");
     }
@@ -188,41 +237,132 @@
 
   function renderDonTable(snapshot) {
     const s = snapshot || {};
+    const dash = (v) => (v === null || v === undefined || String(v).trim() === "" ? "—" : v);
+
+    // --- CURRENT WORK (hero card). Objective carries the heaviest type.
+    renderDlSection(el.dlHero, [
+      ["Objective", dash(s.OBJECTIVE), "hero-label", "hero-value"],
+      ["Current Task", dash(s.CURRENT_TASK), "", "sub-value"],
+      ["Don Intent", dash(s.DON_INTENT), "", "sub-value"],
+      ["Branch", dash(s.CURRENT_BRANCH), "", ""],
+      ["Promoted", dash(s.PROMOTED_CURRENT), "", ""],
+      ["Confidence", s.CONFIDENCE ? s.CONFIDENCE + "%" : "—", "", ""],
+      ["Checkpoint", dash(s.CHECKPOINT), "", ""]
+    ]);
+
+    // --- STATE & PROVENANCE
     renderDlSection(el.dlWhere, [
-      ["Session", s.SESSION_ID || "—"],
-      ["Status", s.SESSION_STATUS || "—"],
-      ["Project", s.PROJECT || "—"],
-      ["Workstream", s.WORKSTREAM || "—"]
+      ["Session", dash(s.SESSION_ID), "mono-label", "mono-value"],
+      ["Status", dash(s.SESSION_STATUS), "", ""],
+      ["Project", dash(s.PROJECT), "", ""],
+      ["Workstream", dash(s.WORKSTREAM), "", ""],
+      ["Origin Anchor", dash(s.ORIGINATING_ANCHOR), "mono-label", "mono-value"],
+      ["Current Anchor", dash(s.CURRENT_ANCHOR), "mono-label", "mono-value"],
+      ["State As Of", dash(s.STATE_AS_OF), "mono-label", "mono-value"]
     ]);
-    renderDlSection(el.dlWhat, [
-      ["Objective", s.OBJECTIVE || "—"],
-      ["Current Task", s.CURRENT_TASK || "—"],
-      ["Don Intent", s.DON_INTENT || "—"],
-      ["Confidence", s.CONFIDENCE ? s.CONFIDENCE + "%" : "—"],
-      ["Checkpoint", s.CHECKPOINT || "—"],
-      ["Current Branch", s.CURRENT_BRANCH || "—"],
-      ["Origin Anchor", s.ORIGINATING_ANCHOR || "—"],
-      ["Current Anchor", s.CURRENT_ANCHOR || "—"],
-      ["Promoted", s.PROMOTED_CURRENT || "—"]
-    ]);
-    renderDlSection(el.dlNext, [
-      ["Next Action", s.NEXT_ACTION || "—"],
-      ["Next Route", s.NEXT_ROUTE || "—"],
-      ["Blocker Route", s.BLOCKER_ROUTE || "—"],
-      ["Handoff State", s.HANDOFF_STATE || "—"],
-      ["Blockers", s.BLOCKERS || "—"],
-      ["Parked", s.PARKED || "—"],
-      ["State Freshness", s.STATE_FRESHNESS || "—"],
-      ["State As Of", s.STATE_AS_OF || "—"]
-    ]);
+
+    // --- EXCEPTIONS. Only rows that actually carry a value render.
+    const exceptions = [
+      ["⚑ Blockers", dash(s.BLOCKERS), "exception-value"],
+      ["Handoff", dash(s.HANDOFF_STATE), ""],
+      ["Next Route", dash(s.NEXT_ROUTE), ""],
+      ["Blocker Route", dash(s.BLOCKER_ROUTE), ""]
+    ].filter(([, v]) => v !== "—");
+
+    renderDlSection(el.dlNext, exceptions.map(([l, v, c]) => [l, v, "", c]));
+
+    // If nothing is wrong, the card says so calmly rather than rendering four dashes.
+    if (exceptions.length === 0) {
+      renderDlSection(el.dlNext, [["Exceptions", "none — calm", "", ""]]);
+    }
+    el.dlNext.closest(".table-section").classList.toggle("is-empty", exceptions.length === 0);
+
+    renderParkShelf(s);
+    renderNextAction(s);
+  }
+
+  /*
+   * Park Shelf — parked work is a shelf, not a line item.
+   * Renders only when the seat actually sent PARKED_ITEMS. If seats emit a plain
+   * string instead of a JSON array the shelf stays empty: honest, not fabricated.
+   */
+  function renderParkShelf(s) {
+    const items = Array.isArray(s.PARKED_ITEMS) ? s.PARKED_ITEMS : [];
+    el.parkShelf.classList.toggle("hidden", items.length === 0);
+    if (items.length === 0) return;
+
+    el.parkTiles.innerHTML = "";
+    for (const p of items) {
+      const tile = document.createElement("div");
+      tile.className = "park-tile";
+
+      const label = document.createElement("span");
+      label.className = "park-tile-label";
+      label.textContent = p?.label || p?.identity || "Unknown";
+      tile.appendChild(label);
+
+      const metaParts = [];
+      const origin = p?.origin || p?.provenance;
+      if (origin) metaParts.push("from ▸ " + origin);
+      const fresh = p?.freshness || p?.status;
+      if (fresh) metaParts.push(String(fresh).toUpperCase());
+      const meta = document.createElement("span");
+      meta.className = "park-tile-meta";
+      meta.textContent = metaParts.join("  ·  ") || "—";
+      tile.appendChild(meta);
+
+      const resume = document.createElement("button");
+      resume.type = "button";
+      resume.className = "tool-btn resume-btn";
+      resume.textContent = "Resume";
+      resume.addEventListener("click", () => {
+        if (p?.identity) {
+          issueCommand("RESUME_PARKED", true, { parkedIdentity: p.identity });
+        }
+      });
+      tile.appendChild(resume);
+
+      el.parkTiles.appendChild(tile);
+    }
+    el.parkShelfHdr.textContent = "Park Shelf ⏸ " + items.length;
+  }
+
+  /* NEXT ACTION — promoted out of the field grid into its own bar, with the
+   * lifecycle actions that follow from it. */
+  const NEXT_ACTION_CONTROLS = [
+    { id: "ANCHOR_COMMIT", label: "Anchor" },
+    { id: "SHOW_STATE", label: "Checkpoint" },
+    { id: "PROMOTE", label: "Promote" },
+    { id: "SUPERSEDE", label: "Supersede" },
+    { id: "END_SESSION", label: "End Session" }
+  ];
+
+  function renderNextAction(s) {
+    const na = s.NEXT_ACTION;
+    el.nextActionValue.textContent =
+      na === null || na === undefined || String(na).trim() === "" ? "—" : na;
+
+    el.nextActionActions.innerHTML = "";
+    for (const c of NEXT_ACTION_CONTROLS) {
+      const btn = document.createElement("button");
+      btn.type = "button";
+      btn.className = "tool-btn";
+      btn.dataset.cmd = c.id;
+      btn.textContent = c.label;
+      btn.addEventListener("click", () => handleToolClick(c.id));
+      setButtonState(c.id, getButtonState(c.id));
+      el.nextActionActions.appendChild(btn);
+    }
   }
 
   function renderDlSection(container, pairs) {
     container.innerHTML = "";
-    for (const [dt, dd] of pairs) {
+    for (const [dt, dd, dtClass, ddClass] of pairs) {
       const d = document.createElement("dt");
+      if (dtClass) d.className = dtClass;
       d.textContent = dt;
       const ddEl = document.createElement("dd");
+      if (ddClass) ddEl.className = ddClass;
       ddEl.textContent = dd;
       container.appendChild(d);
       container.appendChild(ddEl);
@@ -281,8 +421,15 @@
     el.donTable.classList.toggle("expanded", expansionState);
     el.tableContent.classList.toggle("hidden", !expansionState);
     el.btnExpand.setAttribute("aria-expanded", expansionState);
-    el.btnExpand.querySelector(".toggle-icon").textContent = expansionState ? "▾" : "▸";
-    el.btnExpand.querySelector(".toggle-label").textContent = expansionState ? "Hide Details" : "View Details";
+    el.btnExpand.querySelector(".toggle-icon").textContent = expansionState ? "▴" : "▾";
+  }
+
+  /* Session Tools is a collapsed drawer: maintenance controls serve the surface,
+   * they never dominate it. State is per-render, not persisted — depth on demand
+   * should not become a remembered preference that hides the surface. */
+  function toggleToolsDrawer() {
+    const open = el.sessionTools.classList.toggle("open");
+    el.toolsToggle.setAttribute("aria-expanded", open);
   }
 
   function issueCommand(commandId, returnState, payload) {
@@ -503,6 +650,13 @@
 
   function setupEventListeners() {
     el.btnExpand.addEventListener("click", toggleExpansion);
+    el.toolsToggle.addEventListener("click", toggleToolsDrawer);
+    el.toolsToggle.addEventListener("keydown", (e) => {
+      if (e.key === "Enter" || e.key === " ") {
+        e.preventDefault();
+        toggleToolsDrawer();
+      }
+    });
     el.btnLog.addEventListener("click", () => {
       el.logDlg.showModal();
     });
@@ -529,8 +683,7 @@
       el.donTable.classList.remove("collapsed");
       el.tableContent.classList.remove("hidden");
       el.btnExpand.setAttribute("aria-expanded", "true");
-      el.btnExpand.querySelector(".toggle-icon").textContent = "▾";
-      el.btnExpand.querySelector(".toggle-label").textContent = "Hide Details";
+      el.btnExpand.querySelector(".toggle-icon").textContent = "▴";
     }
   }
 

@@ -7,7 +7,7 @@
 </head>
 <body>
   <div id="app">
-    <!-- L0: Trust Strip (always visible) -->
+    <!-- L0: Trust Strip (always visible) — one glance line -->
     <header id="trust-strip" class="trust-strip">
       <div class="ts-seat">
         <span class="ts-label">SEAT</span>
@@ -21,17 +21,15 @@
         <span class="ts-label">STATE</span>
         <span id="ts-freshness-val" class="ts-value freshness-unknown">UNKNOWN</span>
       </div>
+      <div class="ts-blocker hidden" id="ts-blocker">
+        <span id="ts-blocker-val" class="chip chip-blocker"><i class="chip-flag" aria-hidden="true"></i></span>
+      </div>
+      <div class="ts-parked hidden" id="ts-parked">
+        <span id="ts-parked-val" class="chip chip-parked"><i class="chip-flag" aria-hidden="true"></i></span>
+      </div>
       <div class="ts-branch">
         <span class="ts-label">BRANCH</span>
         <span id="ts-branch-val" class="ts-value">—</span>
-      </div>
-      <div id="ts-blocker" class="ts-blocker hidden">
-        <span class="ts-label">BLOCKER</span>
-        <span id="ts-blocker-val" class="ts-value blocker-count">0</span>
-      </div>
-      <div id="ts-parked" class="ts-parked hidden">
-        <span class="ts-label">PARKED</span>
-        <span id="ts-parked-val" class="ts-value parked-count">0</span>
       </div>
     </header>
 
@@ -41,34 +39,54 @@
       <span id="th-status" class="th-status">IDLE</span>
     </div>
 
-    <!-- L1: Don Vernacular Row -->
+    <!-- L1: Don Vernacular Row — five frozen verbs + the depth toggle -->
     <nav id="vernacular-row" class="vernacular-row" aria-label="Don controls">
     </nav>
+    <div class="vernacular-toggles">
+      <span class="vn-spacer" aria-hidden="true"></span>
+      <button id="btn-expand" class="vn-toggle" aria-expanded="false" aria-controls="table-content">
+        <span class="toggle-icon">▾</span> <span class="toggle-label">TABLE</span>
+      </button>
+    </div>
 
     <!-- L2: Don Table (expandable) -->
     <section id="don-table" class="don-table collapsed">
-      <button id="btn-expand" class="table-toggle" aria-expanded="false">
-        <span class="toggle-icon">▸</span>
-        <span class="toggle-label">View Details</span>
-      </button>
 
       <div id="table-content" class="table-content hidden">
+        <!-- CURRENT WORK — the dominant card. Objective carries the heaviest type. -->
+        <div class="table-section hero" data-section="what">
+          <h3 class="section-hdr">Current Work</h3>
+          <dl class="section-dl" id="dl-hero"></dl>
+        </div>
+
+        <!-- STATE & PROVENANCE -->
         <div class="table-section" data-section="where">
-          <h3 class="section-hdr">WHERE AM I</h3>
+          <h3 class="section-hdr">State &amp; Provenance</h3>
           <dl class="section-dl" id="dl-where"></dl>
         </div>
-        <div class="table-section" data-section="what">
-          <h3 class="section-hdr">WHAT IS HAPPENING</h3>
-          <dl class="section-dl" id="dl-what"></dl>
-        </div>
-        <div class="table-section" data-section="next">
-          <h3 class="section-hdr">WHAT CAN I DO NEXT</h3>
+
+        <!-- EXCEPTIONS — only rows with a value render -->
+        <div class="table-section exceptions" data-section="next">
+          <h3 class="section-hdr">Exceptions</h3>
           <dl class="section-dl" id="dl-next"></dl>
         </div>
 
-        <!-- Session Tools Drawer -->
+        <!-- PARK SHELF — parked work is a shelf, not a line item -->
+        <div id="park-shelf" class="table-section park-shelf hidden" data-section="parked">
+          <h3 class="section-hdr" id="park-shelf-hdr">Park Shelf</h3>
+          <div id="park-tiles" class="park-tiles"></div>
+        </div>
+
+        <!-- NEXT ACTION — promoted out of the field grid into its own bar -->
+        <div class="next-action-bar">
+          <span class="next-action-label">Next Action</span>
+          <span id="next-action-value" class="next-action-value">—</span>
+          <div id="next-action-actions" class="next-action-actions"></div>
+        </div>
+
+        <!-- Session Tools Drawer (collapsed) -->
         <div id="session-tools" class="session-tools">
-          <h3 class="section-hdr">SESSION TOOLS</h3>
+          <h3 class="section-hdr" id="tools-toggle" role="button" tabindex="0" aria-expanded="false">Session Tools</h3>
           <div id="tools-grid" class="tools-grid"></div>
         </div>
       </div>
