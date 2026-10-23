@@ -173,6 +173,29 @@ const GCEChatGPTAdapter = (() => {
     );
   }
 
+  async function stage(text) {
+    const target = await resolveTargetTab();
+    if (!target || target.tabId == null) {
+      return { ok: false, error: "NO_CHATGPT_TAB" };
+    }
+    try {
+      const response = await browser.tabs.sendMessage(target.tabId, { type: "GCE_BOOTSTRAP", text });
+      if (!response) return { ok: false, error: "NO_CONTENT_RESPONSE" };
+      /* DON CORRECTION (1.7.4): replacedDraftLength must survive the hop.
+       * The panel uses it to tell Don his draft was overwritten instead of
+       * silently dropping it. Dropping the field made staging look like it
+       * did nothing. */
+      return {
+        ok: response.ok === true,
+        error: response.error,
+        note: response.note,
+        replacedDraftLength: response.replacedDraftLength || 0
+      };
+    } catch (e) {
+      return { ok: false, error: "CONTENT_SCRIPT_UNREACHABLE: " + String(e && e.message ? e.message : e) };
+    }
+  }
+
   /*
    * Ask the content script for the text of the newest assistant turn(s).
    * The content script returns RAW TEXT. ACK identification happens in the
@@ -186,7 +209,18 @@ const GCEChatGPTAdapter = (() => {
     try {
       const response = await browser.tabs.sendMessage(target.tabId, { type: "GCE_OBSERVE" });
       if (!response) return { ok: false, error: "NO_CONTENT_RESPONSE" };
-      return { ok: true, text: response.text || "", turnCount: response.turnCount || 0 };
+      /* DON CORRECTION (1.7.5): `observed` MUST be carried across here.
+       * The content script extracts seat/mode/objective from the session
+       * header, and this adapter was dropping it on the floor. The panel then
+       * received text with no observed field and rendered the strip as "—"
+       * with "No GCE session here" while Don was plainly mid-session. This
+       * single missing field is why ingestion looked broken. */
+      return {
+        ok: true,
+        text: response.text || "",
+        turnCount: response.turnCount || 0,
+        observed: response.observed || null
+      };
     } catch (e) {
       return { ok: false, error: "CONTENT_SCRIPT_UNREACHABLE: " + String(e && e.message ? e.message : e) };
     }
@@ -196,6 +230,7 @@ const GCEChatGPTAdapter = (() => {
     SELECTORS,
     resolveTargetTab,
     send,
+    stage,
     observeAssistantOutput,
     OBSERVER_POLL_MS,
     firstMatch,

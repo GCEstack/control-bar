@@ -6,3 +6,28 @@ Thumbs.db
 evidence/*.json
 !evidence/.gitkeep
 test/node_modules/
+
+# --- build output (2026-10-02 cleanup) -------------------------------------
+# A packaged XPI is a DERIVED artifact: `node build-xpi.js` regenerates it
+# byte-for-byte from extension/. Twenty-six of them had accumulated as untracked
+# files, which is why the working tree never returned to clean and why it was
+# impossible to tell a real source change from build litter.
+#
+# 1.2.0/1.4.0/1.5.0/1.5.1 remain TRACKED: they are the historical baselines
+# the recovery commits are built on. This rule only stops NEW ones appearing.
+gce-don-control-bar-*.xpi
+!gce-don-control-bar-1.2.0.xpi
+!gce-don-control-bar-1.4.0.xpi
+!gce-don-control-bar-1.5.0.xpi
+!gce-don-control-bar-1.5.1.xpi
+*.zip
+
+# CANON 1.7.9 is frozen outside the repo, under
+# 99_ARCHIVE\GCE_ControlBar_CANON_1.7.9_2026-10-02\, with its own source
+# copy and CANON.md. The XPI itself is intentionally NOT tracked here. The
+# frozen record is authoritative for 1.7.9; this repo is the working surface
+# for whatever comes next.
+
+# Scratch verification output from ad-hoc probes.
+probe-*.js
+_extract_probe.js

@@ -2,8 +2,8 @@
   "manifest_version": 2,
   "name": "GCE Don Control Bar",
   "short_name": "GCE Control",
-  "version": "1.5.1",
-  "description": "Persistent control bar for Don. Dumb emitter and status surface. Carries zero GCE command semantics.",
+"version": "1.7.9",
+"description": "Persistent control bar for Don. Hardwired composer staging: every button stages its literal code. Ingests seat, mode and objective from ASSISTANT TURNS ONLY (session header, gce.routing footer, or registry-seat prose). v1.7.9: empty state reads 'no seat yet' / idle / no branch instead of a bare dash, and is never styled as an error.",
   "author": "Nico (build) for Don",
   "browser_specific_settings": {
     "gecko": {

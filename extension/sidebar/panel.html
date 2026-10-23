@@ -42,18 +42,26 @@
       <span id="th-status" class="th-status">IDLE</span>
     </div>
 
-    <!-- L1: Don Vernacular Row — five frozen verbs + the depth toggle -->
-    <nav id="vernacular-row" class="vernacular-row" aria-label="Don controls">
+    <!-- Session hint shown when no valid state has ever arrived -->
+    <div id="session-hint" class="session-hint hidden">No GCE session here — TOOLS ▸ State begins one.</div>
+
+    <!-- L1: Commands Grid — 2×3 -->
+    <div class="section-divider"><span class="section-label">COMMANDS</span></div>
+    <nav id="vernacular-grid" class="vernacular-grid" aria-label="Don controls">
     </nav>
-    <div class="vernacular-toggles">
-      <span class="vn-spacer" aria-hidden="true"></span>
-      <button id="btn-expand" class="vn-toggle" aria-expanded="false" aria-controls="table-content">
-        <span class="toggle-icon">▾</span> <span class="toggle-label">SESSION DETAIL</span>
-      </button>
+    <button id="btn-expand" class="vn-toggle-grid" aria-expanded="false" aria-controls="table-content">
+      <span class="toggle-icon">▾</span> <span class="toggle-label">DETAIL</span>
+    </button>
+
+    <!-- NEXT ACTION — visible above STATE, standalone card -->
+    <div class="next-action-bar">
+      <span class="next-action-label">Next Action</span>
+      <span id="next-action-value" class="next-action-value">—</span>
+      <div id="next-action-actions" class="next-action-actions"></div>
     </div>
 
-    <!-- L2: Don Table — the design's three-question architecture, restored.
-         Post-design schema fields are absorbed per design §H rather than dropped. -->
+    <!-- L2: STATE (expands) -->
+    <div class="section-divider"><span class="section-label">STATE</span></div>
     <section id="don-table" class="don-table collapsed">
 
       <div id="table-content" class="table-content hidden">
@@ -84,14 +92,17 @@
           <div id="park-tiles" class="park-tiles"></div>
         </div>
 
-        <!-- WHAT CAN I DO NEXT -->
-        <div class="next-action-bar">
-          <span class="next-action-label">Next Action</span>
-          <span id="next-action-value" class="next-action-value">—</span>
-          <div id="next-action-actions" class="next-action-actions"></div>
+        <!-- BOOTSTRAP Section -->
+        <div class="section-divider"><span class="section-label">BOOTSTRAP</span></div>
+        <div class="bootstrap-grid">
+          <button type="button" class="tool-btn" data-bootstrap="enzo">ENZO</button>
+          <button type="button" class="tool-btn" data-bootstrap="coda">CODA</button>
+          <button type="button" class="tool-btn" data-bootstrap="serafina">SERAFINA</button>
+          <button type="button" class="tool-btn" data-bootstrap="vittorio">VITTORIO</button>
         </div>
 
         <!-- Session Tools Drawer. LOG lives here now, not in a detached footer. -->
+        <div class="section-divider"><span class="section-label">TOOLS</span></div>
         <div id="session-tools" class="session-tools">
           <h3 class="section-hdr" id="tools-toggle" role="button" tabindex="0" aria-expanded="false">Session Tools</h3>
           <div id="tools-grid" class="tools-grid"></div>

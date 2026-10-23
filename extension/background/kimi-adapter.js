@@ -145,15 +145,41 @@ const GCEKimiAdapter = (() => {
     );
   }
 
+  async function stage(text) {
+    const target = await resolveTargetTab();
+    if (!target || target.tabId == null) {
+      return { ok: false, error: "NO_KIMI_TAB" };
+    }
+    try {
+const response = await browser.tabs.sendMessage(target.tabId, { type: "GCE_BOOTSTRAP", text });
+    if (!response) return { ok: false, error: "NO_CONTENT_RESPONSE" };
+    /* DON CORRECTION (1.7.4): carry replacedDraftLength through, as chatgpt-adapter does. */
+    return {
+      ok: response.ok === true,
+      error: response.error,
+      note: response.note,
+      replacedDraftLength: response.replacedDraftLength || 0
+    };
+    } catch (e) {
+      return { ok: false, error: "CONTENT_SCRIPT_UNREACHABLE: " + String(e && e.message ? e.message : e) };
+    }
+  }
+
   async function observeAssistantOutput() {
     const target = await resolveTargetTab();
     if (!target || target.tabId == null) {
       return { ok: false, error: "NO_KIMI_TAB" };
     }
     try {
-      const response = await browser.tabs.sendMessage(target.tabId, { type: "GCE_OBSERVE" });
-      if (!response) return { ok: false, error: "NO_CONTENT_RESPONSE" };
-      return { ok: true, text: response.text || "", turnCount: response.turnCount || 0 };
+const response = await browser.tabs.sendMessage(target.tabId, { type: "GCE_OBSERVE" });
+    if (!response) return { ok: false, error: "NO_CONTENT_RESPONSE" };
+    /* DON CORRECTION (1.7.5): carry `observed` through, as chatgpt-adapter does. */
+    return {
+      ok: true,
+      text: response.text || "",
+      turnCount: response.turnCount || 0,
+      observed: response.observed || null
+    };
     } catch (e) {
       return { ok: false, error: "CONTENT_SCRIPT_UNREACHABLE: " + String(e && e.message ? e.message : e) };
     }
@@ -163,6 +189,7 @@ const GCEKimiAdapter = (() => {
     SELECTORS,
     resolveTargetTab,
     send,
+    stage,
     observeAssistantOutput,
     OBSERVER_POLL_MS,
     firstMatch,

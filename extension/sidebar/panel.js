@@ -15,6 +15,65 @@
   let holdPending = false;
   let expansionState = localStorage.getItem("gce_panel_expanded") === "true";
   const buttonStates = {};
+  let observedState = null;
+  let observedSeen = false;
+  let transportClearTimeout = null;
+
+  /*
+   * DON HARDWIRE (1.7.4) — the literal code each button stages.
+   * These are intentionally dumb text inserters. No bootstrap routing, no
+   * command envelope, no ACK, no state mutation, no seat inference. A button
+   * named CAPISCE must stage CAPISCE. Anything else is the bug Don reported.
+   */
+  const SIMPLE_TEXT = {
+    CAPISCE: "CAPISCE",
+    HOLD: "HOLD",
+    BRANCH: "BRANCH",
+    RECENTER_SESSION: "RE-CENTER",
+    PARK: "PARK",
+    ANCHOR_COMMIT: "ANCHOR",
+    SHOW_STATE: "CHECKPOINT",
+    PROMOTE: "PROMOTE",
+    SUPERSEDE: "SUPERSEDE",
+    END_SESSION: "END SESSION",
+    REASSERT_FRAME: "FRAME",
+    CREATE_HANDOFF: "HANDOFF",
+    RELEASE_HOLD: "RELEASE HOLD",
+    RESUME_PARKED: "RESUME",
+    RELOAD_BOOTSTRAP: "LOAD BOOTSTRAP"
+  };
+
+  /*
+   * DON CORRECTION (1.7.4) — SAY WHAT ACTUALLY HAPPENED.
+   * The old code only ever said "staged" or "Stage error". When the content
+   * script refused (COMPOSER_OCCUPIED) the panel printed a bare error code and
+   * the button looked dead — which is precisely the report: "Anchor doesn't
+   * work. Checkpoint doesn't work." Now the panel reports the real outcome,
+   * names any replaced draft, and shows the composer verdict.
+   */
+  async function stageSimpleText(text) {
+    try {
+      setStatus("Staging " + text + "...");
+      renderTransportHealth("PENDING");
+      const r = await browser.runtime.sendMessage({ type: "GCE_LOAD_BOOTSTRAP", text });
+      if (r && r.ok) {
+        renderTransportHealth("IDLE");
+        const replaced = r.replacedDraftLength || 0;
+        setStatus(
+          text + " staged" +
+          (replaced > 0 ? " (replaced your " + replaced + "-char draft)" : "") +
+          " — review composer, press Enter"
+        );
+      } else {
+        renderTransportHealth("REJECTED");
+        const err = r && r.error ? r.error : JSON.stringify(r);
+        setStatus(text + " FAILED: " + err + " — nothing staged");
+      }
+    } catch (e) {
+      renderTransportHealth("TRANSPORT_FAIL");
+      setStatus(text + " FAILED: " + String(e && e.message ? e.message : e));
+    }
+  }
 
   const VERNACULAR = [
     { id: "CAPISCE", label: "CAPISCE" },
@@ -54,7 +113,8 @@
     el.tsParkedVal = document.getElementById("ts-parked-val");
     el.transportHealth = document.getElementById("transport-health");
     el.thStatus = document.getElementById("th-status");
-    el.vernacularRow = document.getElementById("vernacular-row");
+    el.sessionHint = document.getElementById("session-hint");
+    el.vernacularGrid = document.getElementById("vernacular-grid");
     el.donTable = document.getElementById("don-table");
     el.btnExpand = document.getElementById("btn-expand");
     el.tableContent = document.getElementById("table-content");
@@ -136,23 +196,117 @@ el.btnEndConfirm = document.getElementById("btn-end-confirm");
     el.setAttribute("aria-label", count === null ? "exception present" : "exception present: " + count);
   }
 
+  function handleObservedState(observed) {
+    if (!observed) return;
+    const seat = observed.SEAT || observed.seat || null;
+    const mode = observed.MODE || observed.mode || null;
+    const obj = observed.OBJECTIVE || observed.objective || null;
+    /* DON CORRECTION (1.7.4): the panel must not blank the trust strip on the
+     * very next poll. Observed state arriving is a real answer; render it and
+     * stop the hint from re-appearing. */
+    if (!seat && !mode && !obj && !observed.PROJECT && !observed.WORKSTREAM &&
+        !observed.NEXT_ACTION && !observed.NEXT_ROUTE && !observed.BLOCKERS &&
+        !observed.DON_INTENT && !observed.STATUS) return;
+    observedState = observed;
+    observedSeen = true;
+    /* DON CORRECTION (1.7.5): re-render the full surface from observed. The
+     * old code poked three text nodes and stopped, so NEXT ACTION and the
+     * STATE cards kept showing "—" even though the header had supplied them. */
+    if (currentSnapshot) {
+      renderDonTable(currentSnapshot);
+    }
+    if (el.tsSeat) {
+      el.tsSeat.textContent = seat || "—";
+      el.tsSeat.classList.add("observed");
+    }
+    if (el.tsMode) {
+      el.tsMode.textContent = mode || "—";
+      el.tsMode.classList.add("observed");
+    }
+    if (el.tsObjectiveVal) {
+      el.tsObjectiveVal.textContent = obj || "—";
+      el.tsObjectiveVal.classList.add("observed");
+    }
+    // Hide hint now that observed has landed
+    el.sessionHint.classList.add("hidden");
+  }
+
   function renderTrustStrip(snapshot) {
     const s = snapshot || {};
-    el.tsSeat.textContent = s.PRIMARY_SEAT || s.AUTHORITY || "—";
-    let modeText = s.MODE || "—";
+    // Clear .observed classes on validated render
+    if (el.tsSeat) el.tsSeat.classList.remove("observed");
+    if (el.tsMode) el.tsMode.classList.remove("observed");
+    if (el.tsObjectiveVal) el.tsObjectiveVal.classList.remove("observed");
+
+    // Use observed as display floor when snapshot is empty
+    const hasValidatedSeat = s.PRIMARY_SEAT || s.AUTHORITY;
+    const obs = observedState || {};
+    const obsSeat = obs.SEAT || obs.seat || null;
+    /* DON CORRECTION (1.7.5): MODE prefers the session header's own line. The
+     * header says "Mode: Standard operating state" and separately
+     * "Status: ACTIVE". Showing the header Mode is the answer to the question
+     * Don asked; do not substitute STATUS for it.
+     *
+     * DON CORRECTION (1.7.6): STATUS is the only floor left when the header has
+     * no "Mode:" line. An empty MODE beside a populated SEAT read as "the seat
+     * is unknown" when in fact the seat told us it is ACTIVE. */
+    const obsMode = obs.MODE || obs.mode || obs.STATUS || obs.status || null;
+    const obsObj = obs.OBJECTIVE || obs.objective || null;
+
+    /*
+     * DON APPROVED (1.7.9) — EMPTY STATE IS A STATE, SAY SO PLAINLY.
+     *
+     * A new chat legitimately has no seat. Rendering that as a bare "—" in three
+     * fields read as "the panel is broken" — which is exactly how the earlier
+     * chrome-scrape looked, and how a genuinely clean panel now looks. The
+     * truthful, calm answer is "no seat yet" / "idle", not a dash and not an
+     * invented identity.
+     *
+     * Note what this does NOT do: it never fills SEAT with a guess. "no seat yet"
+     * is a statement about OBSERVATION (nothing has spoken), not a claim about
+     * who is driving. MODE's idle label is separate for the same reason.
+     */
+    const seatText = s.PRIMARY_SEAT || s.AUTHORITY || obsSeat;
+    el.tsSeat.textContent = seatText || "no seat yet";
+    el.tsSeat.classList.toggle("calm", !seatText);
+
+    let modeText = s.MODE || obsMode;
     if (holdLatched) {
       modeText = modeText ? modeText + " · HOLD" : "HOLD";
+    } else if (!modeText) {
+      modeText = "idle";
     }
     el.tsMode.textContent = modeText;
+    el.tsMode.classList.toggle("calm", !s.MODE && !obsMode && !holdLatched);
 
-    const freshness = fmtFreshness(s.STATE_FRESHNESS);
+    /* DON CORRECTION (1.7.5): freshness must never read UNKNOWN once the seat has
+     * spoken. The header carrying "Status: ACTIVE" IS a live answer; showing
+     * STATE UNKNOWN next to a fully populated seat was the contradiction Don
+     * photographed. */
+    let freshness;
+    if (obsSeat || obsMode || obsObj) {
+      freshness = hasValidatedSeat ? fmtFreshness(s.STATE_FRESHNESS) : "observed";
+      if (freshness === "UNKNOWN" || freshness === "unknown") freshness = "observed";
+    } else if (!hasValidatedSeat && !s.STATE_FRESHNESS) {
+      /* DON APPROVED (1.7.9): nothing observed and nothing validated. "unknown"
+       * implies a measurement failed; nothing was measured. Say "idle" — same
+       * calm styling, but it is the honest word. */
+      freshness = "idle";
+    } else {
+      freshness = fmtFreshness(s.STATE_FRESHNESS);
+    }
     el.tsFreshness.textContent = freshness;
     el.tsFreshness.className = "ts-value freshness-" + freshness.toLowerCase();
 
-    el.tsBranch.textContent = s.CURRENT_BRANCH || s.CURRENT_ANCHOR || "—";
+    // DON APPROVED (1.7.9): same ruling as SEAT — "no branch" beats a bare dash.
+    const branchText = s.CURRENT_BRANCH || s.CURRENT_ANCHOR;
+    el.tsBranch.textContent = branchText || "no branch";
+    el.tsBranch.classList.toggle("calm", !branchText);
 
     // DON CORRECTION 7 — the objective slot always renders. Calm when absent.
-    const objective = val(s.OBJECTIVE);
+    // DON APPROVED (1.7.9): "no objective" is already the honest empty state.
+    // Left as-is deliberately — it was never the confusing one.
+    const objective = val(s.OBJECTIVE) || obsObj;
     el.tsObjectiveVal.textContent = objective === null ? "no objective" : objective;
     el.tsObjectiveVal.classList.toggle("calm", objective === null);
 
@@ -177,6 +331,15 @@ el.btnEndConfirm = document.getElementById("btn-end-confirm");
     } else {
       el.tsParked.classList.add("hidden");
     }
+
+    /* Session hint: show only when nothing validated AND no observed state seen.
+     * DON APPROVED (1.7.9): the strip now says "no seat yet" itself, so the
+     * hint's job is no longer to announce emptiness. It explains the ONE action
+     * that fixes it — TOOLS > State begins a session — so it stays, but it must
+     * not read as an error. */
+    const hasValidState = (s.PRIMARY_SEAT || s.AUTHORITY || s.OBJECTIVE) && freshness !== "unknown";
+    const showHint = !hasValidState && !observedSeen && freshness !== "idle";
+    el.sessionHint.classList.toggle("hidden", !showHint);
   }
 
   function renderTransportHealth(state) {
@@ -200,11 +363,11 @@ el.btnEndConfirm = document.getElementById("btn-end-confirm");
   }
 
   function renderVernacularRow() {
-    el.vernacularRow.innerHTML = "";
+    el.vernacularGrid.innerHTML = "";
     for (const v of VERNACULAR) {
       const btn = document.createElement("button");
       btn.type = "button";
-      btn.className = "vn-btn";
+      btn.className = "vn-btn-grid";
       btn.dataset.cmd = v.id;
       btn.dataset.label = v.label;
       if (v.id === "HOLD" && holdLatched) {
@@ -218,28 +381,29 @@ el.btnEndConfirm = document.getElementById("btn-end-confirm");
       span.textContent = v.label;
       btn.appendChild(span);
       btn.addEventListener("click", () => handleVernacularClick(v.id));
-      el.vernacularRow.appendChild(btn);
+      el.vernacularGrid.appendChild(btn);
     }
   }
 
   function handleVernacularClick(cmdId) {
+    if (cmdId === "CAPISCE" || cmdId === "RECENTER_SESSION" || cmdId === "PARK") {
+      /* THE ORIGINAL DEFECT (fixed here, shipped broken in every build):
+       * these three buttons called loadBootstrap(<some seat>) — CAPISCE loaded
+       * Coda, RE-CENTER loaded Enzo, PARK loaded Vittorio. A button labelled
+       * with a command word silently substituted a seat identity. That is
+       * exactly what Don reported: press CAPISCE, get Coda.
+       * The buttons now stage the literal code, same as every other control.
+       * Seat identity is resolved by the seat from state, never by a button. */
+      stageSimpleText(SIMPLE_TEXT[cmdId] || cmdId);
+      return;
+    }
     if (cmdId === "HOLD") {
       holdLatched = !holdLatched;
       renderVernacularRow();
-      if (holdLatched) {
-        issueCommand("HOLD", true);
-        setStatus("HOLD sent, waiting for ACK...");
-      } else {
-        issueCommand("RELEASE_HOLD", true);
-        setStatus("HOLD release sent, waiting for ACK...");
-      }
-    } else if (cmdId === "BRANCH") {
-      openBranchDialog();
-    } else if (cmdId === "PARK") {
-      issueCommand("PARK", true);
-    } else {
-      issueCommand(cmdId, true);
+      stageSimpleText(holdLatched ? SIMPLE_TEXT.HOLD : SIMPLE_TEXT.RELEASE_HOLD);
+      return;
     }
+    stageSimpleText(SIMPLE_TEXT[cmdId] || cmdId.replace(/_/g, " "));
   }
 
   /*
@@ -261,11 +425,20 @@ el.btnEndConfirm = document.getElementById("btn-end-confirm");
   function renderDonTable(snapshot) {
     const s = snapshot || {};
 
+    /* DON CORRECTION (1.7.5): observed is the display floor for every field.
+     * A seat that has stated a header but not yet sent a validated ACK still
+     * has a real answer. Falling back to observed keeps the STATE cards from
+     * rendering empty during exactly the period Don is reading them. */
+    const o = observedState || {};
+    const pick = (v, keys) => v !== undefined && v !== null ? v
+      : keys.map(k => o[k]).find(x => x !== undefined && x !== null && String(x).trim() !== "") || null;
+
     // --- WHERE AM I. Objective lives in the top strip (Don correction 7).
     const whereRows = rowList([
-      ["Mode", val(s.MODE)],
-      ["Branch", val(s.CURRENT_BRANCH)],
-      ["Origin Anchor", val(s.ORIGINATING_ANCHOR), "mono-label", "mono-value"],
+      ["Mode", val(pick(s.MODE, ["MODE"]))],
+      ["Status", val(pick(s.SESSION_STATUS, ["STATUS"]))],
+      ["Branch", val(pick(s.CURRENT_BRANCH, ["CURRENT_BRANCH"]))],
+      ["Origin Anchor", val(pick(s.ORIGINATING_ANCHOR, ["CURRENT_ANCHOR"])), "mono-label", "mono-value"],
       ["Promoted", val(s.PROMOTED_CURRENT)],
       ["Confidence", val(s.CONFIDENCE) ? s.CONFIDENCE + "%" : null],
       ["Freshness", val(s.STATE_FRESHNESS)],
@@ -277,15 +450,15 @@ el.btnEndConfirm = document.getElementById("btn-end-confirm");
     // Absorbed post-design schema fields, on one compact diagnostics line.
     const ctxRows = rowList([
       ["Session", val(s.SESSION_ID)],
-      ["Status", val(s.SESSION_STATUS)],
-      ["Project", val(s.PROJECT)],
-      ["Workstream", val(s.WORKSTREAM)]
+      ["Status", val(pick(s.SESSION_STATUS, ["STATUS"]))],
+      ["Project", val(pick(s.PROJECT, ["PROJECT"]))],
+      ["Workstream", val(pick(s.WORKSTREAM, ["WORKSTREAM"]))]
     ]);
     renderDlSection(el.dlContext, ctxRows.map(([k, v]) => [k, v, "", ""]));
 
     // --- EXCEPTIONS. Rows only when values exist; card always present.
     const exRows = rowList([
-      ["⚑ Blockers", val(s.BLOCKERS), "", "exception-value"],
+      ["⚑ Blockers", val(pick(s.BLOCKERS, ["BLOCKERS"])), "", "exception-value"],
       ["Handoff", val(s.HANDOFF_STATE)],
       ["Blocker Route", val(s.BLOCKER_ROUTE)],
       ["Parked", val(s.PARKED)]
@@ -298,10 +471,11 @@ el.btnEndConfirm = document.getElementById("btn-end-confirm");
 
     // --- WHAT IS HAPPENING.
     const whatRows = rowList([
-      ["Current Task", val(s.CURRENT_TASK), "", "sub-value"],
-      ["Don Intent", val(s.DON_INTENT), "", "sub-value"],
+      ["Current Task", val(pick(s.CURRENT_TASK, ["CURRENT_TASK"])), "", "sub-value"],
+      ["Don Intent", val(pick(s.DON_INTENT, ["DON_INTENT"])), "", "sub-value"],
       ["Checkpoint", val(s.CHECKPOINT)],
-      ["Next Route", val(s.NEXT_ROUTE)]
+      ["Next Route", val(pick(s.NEXT_ROUTE, ["NEXT_ACTION"]))],
+      ["Evidence", val(pick(null, ["EVIDENCE"])), "", "sub-value"]
     ]);
     renderDlSection(el.dlWhat, whatRows);
     markSectionRows(el.dlWhat.closest(".table-section"), whatRows.length > 0);
@@ -371,7 +545,12 @@ el.btnEndConfirm = document.getElementById("btn-end-confirm");
   ];
 
   function renderNextAction(s) {
-    const na = s.NEXT_ACTION;
+    /* DON CORRECTION (1.7.5): observed is a legitimate display floor here too.
+     * The session header carries "Next Action:", and with no validated ACK
+     * state yet it was the only real answer available. Rendering "—" while the
+     * seat had already stated the next action was the misleading case. */
+    const obs = observedState || {};
+    const na = s.NEXT_ACTION || obs.NEXT_ACTION || obs.NEXT_ROUTE || null;
     el.nextActionValue.textContent =
       na === null || na === undefined || String(na).trim() === "" ? "—" : na;
 
@@ -417,34 +596,7 @@ el.btnEndConfirm = document.getElementById("btn-end-confirm");
   }
 
   function handleToolClick(cmdId) {
-    if (cmdId === "END_SESSION") {
-      openEndDialog();
-    } else if (cmdId === "PROMOTE") {
-      const promoted = currentSnapshot?.PROMOTED_CURRENT;
-      const current = currentSnapshot?.CURRENT_TASK;
-      if (!promoted && !current) {
-        setStatus("No context to promote");
-        return;
-      }
-      const target = promoted || current;
-      const currentTask = currentSnapshot?.CURRENT_TASK;
-      const replaceMsg = currentTask && currentTask !== target ? `\n\nThis will replace current task: "${currentTask}"` : "";
-      const msg = `Promote "${target}" to current?${replaceMsg}`;
-      if (confirm(msg)) {
-        issueCommand("PROMOTE", true, { target, replacesCurrent: currentTask || null });
-      }
-    } else if (cmdId === "SUPERSEDE") {
-      const hasSuperseding = currentSnapshot?.PROMOTED_CURRENT;
-      if (!hasSuperseding) {
-        setStatus("No prior promotion to supersede");
-        return;
-      }
-      if (confirm(`Supersede "${hasSuperseding}"?\n\nThis will clear the current promoted task.`)) {
-        issueCommand("SUPERSEDE", true, { supersedeTarget: hasSuperseding });
-      }
-    } else {
-      issueCommand(cmdId, true);
-    }
+    stageSimpleText(SIMPLE_TEXT[cmdId] || cmdId.replace(/_/g, " "));
   }
 
   function toggleExpansion() {
@@ -495,7 +647,8 @@ el.btnEndConfirm = document.getElementById("btn-end-confirm");
           holdPending = false;
           renderVernacularRow();
         }
-        setStatus(resp?.reason || "Failed to send");
+        const errName = resp?.error || resp?.reason || "UNKNOWN";
+        setStatus(errName + (resp?.note ? " — " + resp.note : ""));
       }
     }).catch(err => {
       renderTransportHealth("TX_FAIL");
@@ -638,6 +791,13 @@ el.btnEndConfirm = document.getElementById("btn-end-confirm");
     renderTrustStrip(currentSnapshot);
     renderDonTable(currentSnapshot);
     setStatus("State received");
+    // Self-clearing: if TX_FAIL is showing, clear it on successful poll
+    if (transportState === "TX_FAIL" || transportState === "TRANSPORT_FAIL") {
+      clearTimeout(transportClearTimeout);
+      transportClearTimeout = setTimeout(() => {
+        renderTransportHealth("IDLE");
+      }, 1500);
+    }
   }
 
   function handleAck(ack) {
@@ -727,6 +887,30 @@ el.btnEndConfirm = document.getElementById("btn-end-confirm");
       el.btnExpand.setAttribute("aria-expanded", "true");
       el.btnExpand.querySelector(".toggle-icon").textContent = "▴";
     }
+
+    // Bootstrap button bindings
+    document.querySelectorAll("[data-bootstrap]").forEach(b =>
+      b.addEventListener("click", () => loadBootstrap(b.dataset.bootstrap)));
+  }
+
+  async function loadBootstrap(seat) {
+    try {
+      const text = await (await fetch(`../bootstraps/${seat}.md`)).text();
+      if (text.includes("PLACEHOLDER")) {
+        setStatus("Bootstrap unavailable — placeholder only");
+        return;
+      }
+      setStatus("Loading bootstrap...");
+      const r = await browser.runtime.sendMessage({ type: "GCE_LOAD_BOOTSTRAP", text });
+      setStatus("Bootstrap result: " + JSON.stringify(r));
+      if (r && r.ok) {
+        setStatus("Bootstrap staged — review composer, press Enter");
+      } else {
+        setStatus("Bootstrap error: " + (r && r.error ? r.error : JSON.stringify(r)));
+      }
+    } catch (e) {
+      setStatus("Bootstrap load error: " + String(e && e.message ? e.message : e));
+    }
   }
 
   function listenForMessages() {
@@ -736,6 +920,8 @@ el.btnEndConfirm = document.getElementById("btn-end-confirm");
         handleSnapshot(msg.snapshot);
       } else if (msg.type === "GCE_ACK" && msg.ack) {
         handleAck(msg.ack);
+      } else if (msg.type === "GCE_OBSERVED_STATE") {
+        handleObservedState(msg.observed || {});
       }
     });
   }
@@ -746,6 +932,21 @@ el.btnEndConfirm = document.getElementById("btn-end-confirm");
     renderSessionTools();
     setupEventListeners();
     listenForMessages();
+    // Open a GCE session on init so the strip has something to show
+    browser.runtime.sendMessage({ type: "GCE_OPEN_SESSION" }).then((snap) => {
+      if (snap) handleSnapshot(snap);
+    }).catch(() => {
+      // Silent fail - sidebar will show empty until snapshot arrives
+    });
+    // Poll for snapshots every second (restored from v1.2.0)
+    setInterval(async () => {
+      try {
+        const s = await browser.runtime.sendMessage({ type: "GCE_GET_SNAPSHOT" });
+        if (s) handleSnapshot(s);
+      } catch (e) {
+        // Silent fail on polling errors
+      }
+    }, 1000);
     setStatus("Ready");
   }
 

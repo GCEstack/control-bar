@@ -112,7 +112,7 @@ function createCore({ protocol, store, adapter, adapterFn, now, sentTimeoutMs = 
 
   function subscribe(fn) {
     subscribers.add(fn);
-    try { fn(getSnapshot()); } catch (_) {}
+    getSnapshot().then((snap) => { try { fn(snap); } catch (_) {} });
     return () => subscribers.delete(fn);
   }
 
@@ -375,7 +375,8 @@ if (typeof browser !== "undefined" && browser.runtime && browser.runtime.id &&
     const chatgptPattern = /^https:\/\/(www\.|chat\.)?chatgpt\.com\//;
     const kimiPattern = /^https:\/\/(www\.|kimi\.)?kimi\.com\//;
 
-    return browser.tabs.query({ active: true, currentWindow: true }).then((tabs) => {
+    // Check all tabs in current window, not just active one (sidebar becomes active when clicked)
+    return browser.tabs.query({ currentWindow: true }).then((tabs) => {
       for (const tab of tabs) {
         if (chatgptPattern.test(tab.url)) return ADAPTERS.chatgpt;
         if (kimiPattern.test(tab.url)) return ADAPTERS.kimi;
@@ -411,12 +412,33 @@ if (typeof browser !== "undefined" && browser.runtime && browser.runtime.id &&
     await core.checkTimeouts();
     const adapter = await detectAdapter();
     currentAdapter = adapter;
-    const r = await adapter.observeAssistantOutput();
-    if (r.ok && r.text) {
+    let r;
+    try {
+      r = await adapter.observeAssistantOutput();
+    } catch (_) {
+      /* DON CORRECTION (1.7.4): a poll that throws must not kill the interval.
+       * An unhandled rejection here stopped ingestion permanently, which is
+       * why the strip stayed "—" for the rest of the session. */
+      return;
+    }
+    if (r && r.ok && r.text) {
       await core.ingestPageText(r.text);
+    }
+    if (r && r.ok && r.observed) {
+      try { browser.runtime.sendMessage({ type: "GCE_OBSERVED_STATE", observed: r.observed }); } catch (_) {}
     }
   }
   setInterval(pollOnce, 700);
+
+  /* DON CORRECTION (1.7.4): ingest immediately on load instead of waiting a
+   * full poll interval, and again once a page finishes loading. Opening the
+   * chat should already show what is being worked on. */
+  pollOnce();
+  if (typeof browser !== "undefined" && browser.tabs && browser.tabs.onUpdated) {
+    browser.tabs.onUpdated.addListener((tabId, changeInfo) => {
+      if (changeInfo && changeInfo.status === "complete") pollOnce();
+    });
+  }
 
   // ---- expose adapter detection for debugging ----
   globalThis.__gceDetectAdapter = detectAdapter;
@@ -447,6 +469,15 @@ if (typeof browser !== "undefined" && browser.runtime && browser.runtime.id &&
     }
     if (msg.type === "GCE_GET_SNAPSHOT") {
       return core.getSnapshot();
+    }
+    if (msg.type === "GCE_LOAD_BOOTSTRAP") {
+      return detectAdapter().then((adapter) => {
+        currentAdapter = adapter;
+        if (!adapter || typeof adapter.stage !== "function") {
+          return { ok: false, error: "ADAPTER_MISSING_STAGE: " + (adapter ? "no stage method" : "no adapter") };
+        }
+        return adapter.stage(msg.text);
+      });
     }
     if (msg.type === "GCE_GET_LOG") {
       return store.getCommandLog().then((commandLog) =>

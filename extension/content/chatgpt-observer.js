@@ -52,7 +52,9 @@
       "div[contenteditable='true'][role='textbox']",
       "textarea[placeholder*='Message']",
       "form > div > div[contenteditable]",
-      "[data-id='root'] form textarea"
+      "[data-id='root'] form textarea",
+      "div[contenteditable][aria-label*='message']",
+      "textarea[name='prompt']"
     ],
     sendButton: [
       "button[data-testid='send-button']",
@@ -64,13 +66,19 @@
       "button[type='submit']",
       "form button:not([type])",
       "div[role='button'][aria-label*='Send']",
-      "[data-testid='root'] button"
+      "[data-testid='root'] button",
+      "button svg[aria-label='Send']"
     ],
     assistantTurn: [
       "[data-message-author-role='assistant']",
       "article[data-testid^='conversation-turn']",
       ".agent-turn",
-      "[data-testid='conversation-turn']"
+      "[data-testid='conversation-turn']",
+      "[data-message-author='assistant']",
+      "div[data-role='assistant']",
+      "section[data-message-author='assistant']",
+      ".message.assistant",
+      "[class*='assistant-message']"
     ]
   };
 
@@ -260,16 +268,231 @@
     });
   }
 
+  /*
+   * DON CORRECTION (1.7.4) — OBSERVE THE WHOLE CONVERSATION, NOT ONE TURN.
+   *
+   * The old extractor read ONLY the last assistant turn and ONLY three literal
+   * "KEY:" lines. Real working sessions say "load nico bootstrap" or
+   * "current_seat: Nico" or talk about the project in prose — so extraction
+   * returned null, `observed` never landed, the trust strip stayed "—" and the
+   * hint read "No GCE session here" while Don was plainly mid-session. That is
+   * the "it doesn't get the state when it loads the chat" report.
+   *
+   * Fix: scan every turn (later turns win), accept several spellings per field,
+   * and parse the gce.routing footer block when present. Nothing is invented —
+   * a field only populates if the text actually contains it.
+   */
+  /*
+   * DON CORRECTION (1.7.8) — OBSERVED STATE COMES ONLY FROM ASSISTANT TURNS.
+   *
+   * 1.7.4 added a fallback for pages with no assistant turns:
+   *   const main = document.querySelector("main"); extractObservedState(main.innerText)
+   * `main` is the WHOLE PAGE. On a new chat it contains the Recents sidebar
+   * (chat titles), Don's own prompt, and UI placeholder strings. So a brand-new
+   * chat ingested a chat title as the objective, Don's question as the seat's
+   * Next Action, and the literal placeholder "blank" as SEAT and MODE. Don's
+   * screenshot showed exactly that: SEAT blank, MODE blank, an objective that
+   * was a Recents title.
+   *
+   * None of that is seat output. No assistant turn means no seat has spoken, so
+   * there is nothing to report. Returning null is the honest answer; a page-wide
+   * scrape dressed in seat labels is not.
+   *
+   * `text` still falls back, because ACK ingestion is nonce-bound and cannot be
+   * spoofed by page chrome. But it is NEVER a source of observed state.
+   */
   function observe() {
     const turns = allMatches(SELECTORS.assistantTurn);
     if (turns.length === 0) {
-      const main = document.querySelector("main") || document.body;
-      return { text: main ? main.innerText || "" : "", turnCount: 0 };
+      return { text: "", turnCount: 0, observed: null, chromeText: chromeText() };
     }
-    // Return ALL assistant turn text, not just the last one
-    // ACKs may appear in any turn, not just the most recent
     const allText = turns.map(t => t.innerText || t.textContent || "").join("\n");
-    return { text: allText, turnCount: turns.length };
+    const observed = extractObservedState(allText);
+    return { text: allText, turnCount: turns.length, observed };
+  }
+
+  // Page text, used ONLY for ACK ingestion. Never for observed state.
+  function chromeText() {
+    const main = document.querySelector("main");
+    return main ? main.innerText || "" : "";
+  }
+
+  const SEAT_VOCAB = [
+    "Coda", "Vittorio", "Chiave", "Nico", "Corrado", "Falcon", "Talon",
+    "Keel", "Luce", "Magpie", "Pigeon", "Raven", "Enzo", "Serafina"
+  ];
+
+  // A field matches only on an explicit label. No prose guessing.
+  /* DON CORRECTION (1.7.8) — a matched label is not automatically a real value.
+   * Chat surfaces render placeholder strings into the DOM, and several of them
+   * are literally the word "blank". Reporting "blank" as SEAT is worse than
+   * reporting nothing: it looks like state and is not. These are rejected
+   * wherever they appear. "none" is NOT in this list — "Blockers: None" and
+   * "Parked: None established" are real answers. */
+  const PLACEHOLDER_VALUES = new Set([
+    "blank", "empty", "undefined", "null", "nan", "n/a", "na",
+    "placeholder", "none set", "not set", "unknown", "tbd", "todo",
+    "-", "--", "...", "…"
+  ]);
+
+  function isPlaceholder(v) {
+    if (!v) return true;
+    const n = String(v).trim().toLowerCase().replace(/[.\s]+$/, "");
+    return n === "" || PLACEHOLDER_VALUES.has(n);
+  }
+
+  function field(text, labels) {
+    for (const l of labels) {
+      const re = new RegExp("^[ \\t>*_-]*(?:" + l + ")[ \\t]*[:=][ \\t]*(.+?)\\s*$", "im");
+      const m = text.match(re);
+      if (m && m[1]) {
+        const v = m[1].replace(/^["'`]+|["'`,]+$/g, "").trim();
+        if (v && !isPlaceholder(v)) return v;
+      }
+    }
+    return null;
+  }
+
+  function extractObservedState(text) {
+    if (!text || !text.trim()) return null;
+
+    const routing = parseRoutingFooter(text);
+
+    /* DON CORRECTION (1.7.5): the session header is the PRIMARY form. It reads:
+     *   Primary Seat: Enzo — Executive Integrator / Organizational Operator
+     *   Mode: Standard operating state
+     *   Status: ACTIVE
+     *   Objective: ...
+     *   Next Action: ...
+     * The routing footer is the SECOND form. Header wins on conflict because it
+     * is the seat speaking now; the footer is the machine record of last state.
+     * Both are ingested — neither is a fallback for the other. */
+    let seat = field(text, ["SEAT", "Primary seat", "current_seat", "CURRENT_SEAT", "Identity"]);
+    if (seat) seat = bareSeat(seat);
+    if (!seat && routing && routing.current_seat) seat = bareSeat(routing.current_seat);
+
+    let mode = field(text, ["MODE", "mode"]);
+    if (!mode && routing && routing.session_status) mode = routing.session_status;
+
+    const status = field(text, ["STATUS", "Status", "Session status", "SESSION_STATUS", "session_status"]);
+
+    let objective = field(text, ["OBJECTIVE", "objective", "Current Task", "CURRENT_TASK"]);
+    if (!objective) objective = field(text, ["Current Anchor", "CURRENT_ANCHOR", "Anchor", "ANCHOR"]);
+    if (!objective && routing && routing.current_anchor) objective = routing.current_anchor;
+
+    const project = field(text, ["PROJECT", "project"]) || (routing && routing.project) || null;
+    const workstream = field(text, ["WORKSTREAM", "workstream"]) || (routing && routing.workstream) || null;
+    const nextAction = field(text, ["Next Action", "NEXT_ACTION", "NEXT_ROUTE", "Next Route", "next_route"])
+      || (routing && routing.next_route) || null;
+    const blockers = field(text, ["BLOCKERS", "Blockers", "blocker_route", "Blocker Route"]);
+    const donIntent = field(text, ["Don Intent", "DON_INTENT"]);
+    const evidence = field(text, ["EVIDENCE", "Evidence"]);
+
+    /* DON CORRECTION (1.7.6) — restore the prose fallback for SEAT.
+     * 1.7.5 rewrote this function for the two-form header ingest and dropped the
+     * fallback, so a live working session with no "Primary Seat:" line showed
+     * SEAT — even while the seat was plainly named in the conversation. Don's
+     * screenshot: objective and next action landed, SEAT and MODE stayed "—".
+     * The fallback only fires when no labelled SEAT exists, and it only matches
+     * a registry seat token, so it cannot invent an identity. */
+    if (!seat) seat = seatFromProse(text);
+
+    if (!seat && !mode && !objective && !project && !workstream && !nextAction &&
+        !blockers && !donIntent && !evidence && !status) return null;
+
+    return {
+      SEAT: seat,
+      MODE: mode,
+      STATUS: status,
+      OBJECTIVE: objective,
+      PROJECT: project,
+      WORKSTREAM: workstream,
+      NEXT_ACTION: nextAction,
+      BLOCKERS: blockers,
+      DON_INTENT: donIntent,
+      EVIDENCE: evidence
+    };
+  }
+
+  /* "Enzo — Executive Integrator / Organizational Operator" is a seat plus a
+   * role description. The strip shows the seat. A role suffix must never make
+   * the trust strip read as an identity that is not in the registry. */
+  function bareSeat(raw) {
+    if (!raw) return null;
+    if (isPlaceholder(raw)) return null;
+    const first = String(raw).split(/\s+[—–-]\s+/)[0].trim();
+    if (!first || isPlaceholder(first)) return null;
+    return first;
+  }
+
+  /*
+   * DON CORRECTION (1.7.6) — seat from conversation prose.
+   *
+   * Last match wins: the most recently mentioned seat is the one being driven.
+   * Only registry seats match, so this can never invent an identity or surface a
+   * retired name. Retired seats (Kimi, Ragno, Calibro) are deliberately absent
+   * from SEAT_VOCAB — a dead seat must not be reachable by mention.
+   */
+  function seatFromProse(text) {
+    if (!text) return null;
+    /* Scan by POSITION, not by iterating the vocabulary. Iterating the
+     * vocabulary and letting each name overwrite the last gave "Nico" for a
+     * turn that ends with Ceda, because Nico sat later in the list, not in the
+     * text. The most recent mention in the TEXT is the one being driven. */
+    let best = null, bestAt = -1;
+    for (const s of SEAT_VOCAB) {
+      const re = new RegExp("(^|[^A-Za-z])" + s + "([^A-Za-z]|$)", "g");
+      let m;
+      while ((m = re.exec(text)) !== null) {
+        if (m.index > bestAt) { bestAt = m.index; best = s; }
+      }
+    }
+    return best;
+  }
+
+  // Parse the last fenced gce.routing JSON block, if the seat emitted one.
+  function parseRoutingFooter(text) {
+    const fence = /```gce\.routing\s*([\s\S]*?)```/gi;
+    let m, last = null;
+    while ((m = fence.exec(text)) !== null) {
+      try { last = JSON.parse(m[1]); } catch (_) { /* not valid JSON; ignore */ }
+    }
+    return last && typeof last === "object" ? last : null;
+  }
+
+  /*
+   * DON CORRECTION (1.7.4) — STAGING IS AN EXPLICIT OPERATOR ACT.
+   *
+   * v1.7.3 refused to stage whenever the composer held any draft:
+   *   if (before.trim() !== "") return fail("COMPOSER_OCCUPIED")
+   * Don types into the composer constantly, so that guard turned EVERY
+   * hardwired button into a silent no-op. Symptom on screen: "Anchor doesn't
+   * work", "Checkpoint doesn't work", "composer occupied". The guard was
+   * protecting a draft Don was actively editing — but a button click IS the
+   * instruction to put this text there. The refusal was the bug.
+   *
+   * We now overwrite, and we REPORT what was overwritten rather than silently
+   * destroying it. `replacedDraftLength` travels up to the panel so the status
+   * line can say "replaced your draft (N chars)". Nothing is fabricated and
+   * nothing is lost without being named.
+   */
+  async function stageBootstrap(text) {
+    const composer = firstMatch(SELECTORS.composer);
+    if (!composer || composer.disabled) return { ok: false, error: "COMPOSER_NOT_FOUND" };
+    const before = readComposer(composer);
+    const replacedDraftLength = before.trim() === "" ? 0 : before.length;
+    nativeSetValue(composer, text);
+    composer.focus();
+    await new Promise((r) => setTimeout(r, INJECT_SETTLE_MS));
+    const staged = readComposer(composer);
+    if (staged.trim() === "") return { ok: false, error: "ENVELOPE_NOT_STAGED" };
+    return {
+      ok: true,
+      replacedDraftLength,
+      note: replacedDraftLength > 0
+        ? "staged (replaced " + replacedDraftLength + "-char draft) — review, press Enter"
+        : "staged — review composer, press Enter"
+    };
   }
 
   browser.runtime.onMessage.addListener((msg) => {
@@ -280,6 +503,9 @@
     if (msg.type === "GCE_OBSERVE") {
       const r = observe();
       return Promise.resolve({ ...r, type: "GCE_OBSERVE_RESULT" });
+    }
+    if (msg.type === "GCE_BOOTSTRAP") {
+      return stageBootstrap(msg.text).then((r) => ({ ...r, type: "GCE_BOOTSTRAP_RESULT" }));
     }
     if (msg.type === "GCE_PING") {
       return Promise.resolve({ ok: true, composerReady: composerReady(), type: "GCE_PING_RESULT" });

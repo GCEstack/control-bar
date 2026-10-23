@@ -114,6 +114,14 @@ body {
 .freshness-stale { color: var(--warning); }
 .freshness-unknown { color: var(--text-muted); }
 
+/* DON APPROVED (1.7.9) — EMPTY STATE STYLING.
+ * "no seat yet" / "idle" / "no branch" are calm statements about what has been
+ * observed, never error states. Muted and italic, matching .calm below, so an
+ * empty panel reads as resting rather than broken. No red, no warning colour.
+ */
+.freshness-idle { color: var(--text-muted); }
+.ts-value.calm { color: var(--text-muted); font-weight: 500; font-style: italic; }
+
 /* D-15 EXCEPTION TREATMENT.
  * A blocker is an EXCEPTION STATE, never an error state: amber flag, never red.
  * The committed build wired --danger here since v1.3.2, which is a D-15 breach.
@@ -218,105 +226,100 @@ body {
 .transport-tx_fail { color: var(--danger); }
 .transport-rejected { color: var(--warning); }
 
-/* L1: Vernacular Row — the five frozen verbs. Equal, COMPACT weight.
- * They serve the surface; they must not become the surface.
- *
- * D-15 wrap fix: `white-space: nowrap` on the BUTTON is the defect being fixed —
- * RE-CENTER was breaking onto two lines INSIDE its own button. The ROW is still
- * allowed to wrap if the panel is ever narrower than the five labels need, so a
- * button can never end up truncating its own name to "RE-C...". */
-.vernacular-row {
+/* Section dividers with labels */
+.section-divider {
   display: flex;
-  flex-wrap: wrap;
-  align-items: stretch;
-  justify-content: center;
-  gap: 5px;
-  padding: 10px 12px;
-  background: var(--bg-primary);
+  align-items: center;
+  padding: 8px 12px 6px;
+  background: var(--bg-secondary);
   border-bottom: 1px solid var(--border);
 }
 
-/* DON CORRECTION 2 — the command row was over-weighted and dominated the surface.
- * The five verbs are now quiet: low-contrast until invoked, compact, no lift. */
-.vn-btn {
-  flex: 1 1 auto;
-  min-width: 0;
-  white-space: nowrap;
-  padding: 6px 4px;
-  background: transparent;
-  border: 1px solid var(--border);
-  border-radius: 4px;
-  color: var(--text-secondary);
-  font-size: 10px;
-  font-weight: 500;
-  letter-spacing: 0;
-  cursor: pointer;
-  transition: color 0.15s ease, border-color 0.15s ease, background 0.15s ease;
+.section-divider::before,
+.section-divider::after {
+  content: "";
+  flex: 1;
+  height: 1px;
+  background: var(--border);
 }
 
-/* Verbs come forward only on intent. */
-.vn-btn:hover {
-  color: var(--text-primary);
-  border-color: var(--accent);
-}
-
-.vn-btn:focus-visible { outline: 1px solid var(--accent); outline-offset: 1px; }
-
-.vn-btn .vn-label { display: block; }
-
-/* The TABLE toggle rides in the vernacular row, not the table — it is the
- * control that governs depth on demand. */
-.vn-spacer { flex: 0 0 6px; }
-
-.vn-toggle {
+.section-label {
   flex: 0 0 auto;
-  align-self: stretch;
-  min-width: 54px;
-  white-space: nowrap;
-  padding: 7px 8px;
-  background: transparent;
-  border: 1px solid var(--border);
-  border-radius: 5px;
-  color: var(--text-secondary);
-  font-size: 11px;
-  cursor: pointer;
-  transition: all 0.15s ease;
+  padding: 0 10px;
+  font-size: 9px;
+  font-weight: 700;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
 }
 
-.vn-toggle:hover { color: var(--text-primary); border-color: var(--accent); }
-.vn-toggle[aria-expanded="true"] { color: var(--accent); border-color: var(--accent); }
-
-/* Toggle strip rides directly under the vernacular row, inside the same surface. */
-.vernacular-toggles {
-  display: flex;
-  align-items: stretch;
-  gap: 5px;
-  padding: 0 12px 10px;
+/* L1: Commands Grid — 2×3 with toggle in bottom-right */
+.vernacular-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 6px;
+  padding: 10px 12px;
   background: var(--bg-primary);
 }
 
-.vn-btn:hover {
+.vn-btn-grid {
+  padding: 8px 6px;
+  background: var(--bg-tertiary);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  color: var(--text-primary);
+  font-size: 11px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  text-align: center;
+}
+
+.vn-btn-grid:hover {
+  border-color: var(--accent);
+  background: var(--bg-secondary);
+}
+
+.vn-btn-grid:focus-visible {
+  outline: 1px solid var(--accent);
+  outline-offset: 1px;
+}
+
+.vn-btn-grid.latched {
   background: var(--accent);
   border-color: var(--accent);
+  color: #fff;
 }
 
-.vn-btn:active,
-.vn-btn.pending {
-  opacity: 0.7;
+.vn-btn-grid.pending {
+  opacity: 0.6;
 }
 
-.vn-btn.latched {
-  background: var(--accent);
+.vn-toggle-grid {
+  display: block;
+  width: calc(50% - 15px);
+  margin-left: auto;
+  margin-right: 12px;
+  margin-bottom: 10px;
+  padding: 6px 8px;
+  background: var(--bg-tertiary);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  color: var(--text-secondary);
+  font-size: 10.5px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  text-align: center;
+}
+
+.vn-toggle-grid:hover {
   border-color: var(--accent);
+  color: var(--text-primary);
 }
 
-.vn-btn.confirm {
-  background: var(--success);
-  border-color: var(--success);
-}
-
-.vn-btn.error {
-  border-color: var(--danger);
+.vn-toggle-grid[aria-expanded="true"] {
+  border-color: var(--accent);
+  color: var(--accent);
 }
 
 /* L2: Don Table */
@@ -533,30 +536,28 @@ button.ts-parked:focus-visible { outline: 1px solid var(--accent); outline-offse
   align-self: center;
 }
 
-/* NEXT ACTION — promoted out of the field grid into its own bar. */
+/* NEXT ACTION — standalone card, visible above STATE */
 .next-action-bar {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 8px;
+  margin: 0 12px 10px;
   padding: 9px 11px;
-  margin-bottom: 10px;
   background: var(--bg-tertiary);
   border: 1px solid var(--border);
   border-left: 3px solid var(--success);
-  border-radius: 7px;
+  border-radius: 6px;
 }
 
 .next-action-label {
+  display: block;
   font-size: 9px;
   font-weight: 700;
   color: var(--text-muted);
   text-transform: uppercase;
   letter-spacing: 0.8px;
+  margin-bottom: 4px;
 }
 
 .next-action-value {
-  flex: 1 1 100%;
+  display: block;
   font-size: 12px;
   font-weight: 600;
   color: var(--text-primary);
@@ -564,11 +565,10 @@ button.ts-parked:focus-visible { outline: 1px solid var(--accent); outline-offse
 }
 
 .next-action-actions {
-  flex: 1 1 100%;
-  display: flex;
-  flex-wrap: wrap;
-  gap: 5px;
-  margin-top: 2px;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 6px;
+  margin-top: 6px;
 }
 
 .next-action-actions .tool-btn { padding: 5px 8px; font-size: 10px; }
@@ -832,3 +832,17 @@ dialog::backdrop {
   margin-top: 16px;
   text-align: center;
 }
+
+/* Session hint — shown when no valid state has ever arrived */
+.session-hint {
+  background: transparent;
+  border: 0;
+  padding: 2px 12px 8px;
+  font-size: 10px;
+  color: var(--text-muted);
+}
+
+/* Bootstrap Grid */
+.bootstrap-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; margin: 0 12px 10px; }
+.freshness-observed { color: var(--text-muted); border: 1px dashed var(--border); border-radius: 3px; padding: 0 4px; }
+.ts-value.observed { color: var(--text-muted); border-bottom: 1px dotted var(--border); }
